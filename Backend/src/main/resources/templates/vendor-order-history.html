@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            line-height: 1.5;
+            padding: 30px;
+            margin: 0;
+        }
+
+        .header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: table;
+            width: 100%;
+        }
+
+        .logo-section {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -1px;
+        }
+
+        .logo-accent {
+            color: #f59e0b;
+        }
+
+        .vendor-info {
+            display: table-cell;
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .vendor-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .vendor-detail {
+            font-size: 12px;
+            color: #64748b;
+            margin: 2px 0;
+        }
+
+        .title-section {
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .report-date {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+            border-spacing: 10px 0;
+        }
+
+        .stat-card {
+            display: table-cell;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            width: 50%;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .table th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 12px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .table td {
+            padding: 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .order-id {
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-delivered {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .status-pending {
+            background: #fff7ed;
+            color: #d97706;
+        }
+
+        .status-cancelled {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-other {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        .currency {
+            font-family: 'DejaVu Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo-text">Jiffy<span class="logo-accent">Kart</span></div>
+            <div style="font-size: 10px; color: #64748b; font-weight: 700;">OFFICIAL INVENTORY REGISTRY</div>
+        </div>
+        <div class="vendor-info">
+            <p class="vendor-name" th:text="${shopName}">Vendor Shop Name</p>
+            <p class="vendor-detail" th:text="${shopAddress}">Business Address, City, State</p>
+            <p class="vendor-detail" th:text="${shopEmail}">vendor@example.com</p>
+        </div>
+    </div>
+
+    <div class="title-section">
+        <h1 class="report-title">Order History Registry</h1>
+        <p class="report-date" th:text="'Generated on: ' + ${generatedDate}">March 06, 2026</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Volume (Matches)</div>
+            <div class="stat-value" th:text="${totalOrders}">24</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Cumulative Revenue</div>
+            <div class="stat-value"><span class="currency">&#8377;</span><span
+                    th:text="${#numbers.formatDecimal(totalRevenue, 1, 2)}">12,450.00</span></div>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: center;">Status</th>
+                <th>Payment</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.date}">2026-03-05</td>
+                <td class="order-id" th:text="'#' + ${order.id}">#ORD-1024</td>
+                <td th:text="${order.customerName}">John Doe</td>
+                <td style="text-align: right; font-weight: 700;">
+                    <span class="currency">&#8377;</span><span
+                        th:text="${#numbers.formatDecimal(order.total, 1, 2)}">540.00</span>
+                </td>
+                <td style="text-align: center;">
+                    <span
+                        th:class="'status-badge ' + 
+                        (${order.status == 'DELIVERED'} ? 'status-delivered' : 
+                        (${order.status == 'PENDING' || order.status == 'ORDER_RECEIVED'} ? 'status-pending' : 
+                        (${order.status == 'REJECTED' || order.status == 'CANCELLED'} ? 'status-cancelled' : 'status-other')))"
+                        th:text="${order.status}">
+                        DELIVERED
+                    </span>
+                </td>
+                <td th:text="${order.paymentStatus}">Paid</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>This document is an official record of transactions for the specified vendor on the JiffyKart platform.</p>
+        <p>&#169; 2026 JiffyKart Inc. | Secure E-commerce Infrastructure</p>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { background: #1a1a2e; color: #fff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { padding: 20px; }
+        .order-id { font-weight: bold; color: #e94560; }
+        .total { font-size: 20px; font-weight: bold; color: #1a1a2e; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+        .item-list { margin: 20px 0; border-top: 1px solid #eee; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmed!</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{userName}},</p>
+            <p>Thank you for shopping with <strong>Jiffy Kart</strong>. Your order has been placed successfully and is being processed.</p>
+            <p>Order ID: <span class="order-id">#{{orderId}}</span></p>
+            
+            <div class="item-list">
+                <h3>Order Summary:</h3>
+                <p>{{items}}</p>
+            </div>
+            
+            <p class="total">Total Amount: ₹{{total}}</p>
+            
+            <p>We'll notify you once your order is out for delivery.</p>
+        </div>
+        <div class="footer">
+            <p>© 2026 Jiffy Kart. All rights reserved.</p>
+            <p>If you have any questions, contact our 24/7 support.</p>
+        </div>
+    </div>
+</body>
+</html>

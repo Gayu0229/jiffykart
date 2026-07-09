@@ -1,0 +1,7 @@
+{
+  "name": "JiffyKart Vendor Panel",
+  "description": "A high-performance vendor dashboard for JiffyKart, featuring analytics, order management, and product catalog controls with a sleek modern UI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

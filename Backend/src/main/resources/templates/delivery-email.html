@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .hero {
+            background: #f4faf4;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hero h1 {
+            color: #FC6C37;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #FC6C37;
+            color: white !important;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .summary {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo" style="color: #000000;">Jiffy <span style="color: #FC6C37;">Kart</span>.</div>
+        </div>
+
+        <div class="hero">
+            <h1>It's Here!</h1>
+            <p>Your order from <strong th:text="${shopName}">Fresh Mart</strong> has been delivered.</p>
+        </div>
+
+        <p>Hi <strong th:text="${customerName}">John</strong>,</p>
+        <p>We're happy to let you know that your order <strong>#<span th:text="${orderId}">1782</span></strong> was
+            successfully delivered just now. We hope you love what you've ordered!</p>
+
+        <div style="text-align: center;">
+            <a href="http://localhost:3002/track-orders" class="button">Rate Your Purchase</a>
+        </div>
+
+
+        <div class="summary">
+            <h3>Quick Details:</h3>
+            <p><strong>Store:</strong> <span th:text="${shopName}">Fresh Mart</span></p>
+            <p><strong>Total Amount:</strong> <span
+                    th:text="'&#8377;' + ${#numbers.formatDecimal(totalAmount, 1, 2)}">&#8377;80.00</span></p>
+            <p><strong>Delivery Date:</strong> <span th:text="${deliveryDate}">Feb 25, 2026</span></p>
+        </div>
+
+        <p>If you have any questions or if something isn't right, our support team is just a click away.</p>
+
+        <div class="footer">
+            <p>&#169; 2026 Jiffy Kart Inc. | Making delivery fast & simple.</p>
+            <p>Nagpur, Maharashtra, India</p>
+        </div>
+    </div>
+</body>
+
+</html>

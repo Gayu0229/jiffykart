@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .card h1 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #FC6C37;
+            color: white !important;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo" style="color: #000000;">Jiffy <span style="color: #FC6C37;">Kart</span>.</div>
+
+        <div class="card">
+            <h1>Your Invoice is Ready</h1>
+            <p>Thank you for your recent purchase! Attached is the official invoice for your order.</p>
+        </div>
+
+        <p>Hi <strong th:text="${customerName}">John</strong>,</p>
+        <p>Please find the attached invoice <strong>#<span th:text="${invoiceNumber}">INV-12345</span></strong> for your
+            order <strong>#<span th:text="${orderId}">1782</span></strong>.</p>
+
+        <p>This invoice serves as a receipt for your successful purchase from Jiffy Kart. You can also access this and
+            all previous invoices from your profile under <strong>Order History</strong>.</p>
+
+        <div style="text-align: center;">
+            <a href="http://localhost:3002/profile" class="button">View Order History</a>
+        </div>
+
+        <p>If you have any questions regarding this invoice, please don't hesitate to reach out to our support team.</p>
+
+        <div class="footer">
+            <p>&#169; 2026 Jiffy Kart Inc. | Making delivery fast & simple.</p>
+            <p>Nagpur, Maharashtra, India</p>
+        </div>
+    </div>
+</body>
+
+</html>
