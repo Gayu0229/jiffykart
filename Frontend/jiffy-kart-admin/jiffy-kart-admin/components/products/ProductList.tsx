@@ -59,12 +59,16 @@ const ProductList: React.FC<ProductListProps> = ({ onAddProduct, onEditProduct }
   }, [toast]);
 
   const getVendorName = (id: string) => {
-    return vendors.find(v => v.id === id)?.shopName || 'Unknown Vendor';
+    if (!vendors || !Array.isArray(vendors)) return 'Unknown Vendor';
+    return vendors.find(v => v && v.id === id)?.shopName || 'Unknown Vendor';
   };
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProducts = (products || []).filter(p => {
+    if (!p) return false;
+    const name = p.name || '';
+    const sku = p.sku || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'All' || p.category === filterCategory;
     const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
 

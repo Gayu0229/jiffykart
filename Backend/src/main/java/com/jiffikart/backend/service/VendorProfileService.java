@@ -71,6 +71,9 @@ public class VendorProfileService {
                 .email(shop.getEmail())
                 .phone(shop.getPhone())
                 .pincode(shop.getPincode())
+                .vendorType(shop.getVendorType() != null ? shop.getVendorType().name() : null)
+                .businessModel(shop.getBusinessModel())
+                .shopId(shop.getId())
                 .build();
     }
 

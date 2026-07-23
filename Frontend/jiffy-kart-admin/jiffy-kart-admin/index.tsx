@@ -7,6 +7,11 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Global Unhandled Rejection]', event.reason);
+  event.preventDefault();
+});
+
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>

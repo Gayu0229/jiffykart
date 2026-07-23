@@ -169,46 +169,54 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => {
               </span>
             </div>
             <div className="space-y-4">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex items-start">
-                  <img src={item.image || 'https://via.placeholder.com/64'} alt={item.name} className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
-                  <div className="ml-4 flex-1">
-                    <h3 className="text-sm font-bold text-gray-900">{item.name}</h3>
-                    <p className="text-xs text-gray-500">{item.variant}</p>
-                    <div className="mt-1 text-sm font-medium text-gray-900">
-                      ₹{item.price.toFixed(2)} x {item.quantity}
+              {(order.items || []).map((item) => {
+                if (!item) return null;
+                const itemPrice = item.price || 0;
+                const itemQty = item.quantity || 1;
+                return (
+                  <div key={item.id || Math.random().toString()} className="flex items-start">
+                    <img src={item.image || 'https://via.placeholder.com/64'} alt={item.name || 'Product'} className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                    <div className="ml-4 flex-1">
+                      <h3 className="text-sm font-bold text-gray-900">{item.name || 'Product'}</h3>
+                      <p className="text-xs text-gray-500">{item.variant}</p>
+                      <div className="mt-1 text-sm font-medium text-gray-900">
+                        ₹{itemPrice.toFixed(2)} x {itemQty}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900">₹{(itemPrice * itemQty).toFixed(2)}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-2 text-sm">
-              <div className="flex justify-between text-gray-600"><span>Subtotal</span> <span>₹{order.subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between text-gray-600"><span>Tax (GST)</span> <span>₹{order.tax.toFixed(2)}</span></div>
-              <div className="flex justify-between text-gray-600"><span>Delivery Fee</span> <span>₹{order.deliveryFee.toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Subtotal</span> <span>₹{(order.subtotal || 0).toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Tax (GST)</span> <span>₹{(order.tax || 0).toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Delivery Fee</span> <span>₹{(order.deliveryFee || 0).toFixed(2)}</span></div>
               <div className="flex justify-between text-gray-900 font-bold text-base pt-2 border-t border-gray-100 mt-2">
                 <span>Total Amount</span>
-                <span>₹{order.totalAmount.toFixed(2)}</span>
+                <span>₹{(order.totalAmount || 0).toFixed(2)}</span>
               </div>
             </div>
           </div>
-
+ 
           {/* Tracking & Logs Timeline */}
           {order.logs && order.logs.length > 0 && (
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Order Timeline</h3>
               <div className="relative pl-4 border-l-2 border-gray-100 space-y-8 my-2">
-                {order.logs.map((log, index) => (
-                  <div key={index} className="relative">
-                    <div className="absolute -left-[21px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-white shadow-sm"></div>
-                    <div className="text-sm font-bold text-gray-900">{log.status}</div>
-                    <div className="text-xs text-gray-500 mb-1">{log.timestamp}</div>
-                    <p className="text-sm text-gray-600">{log.description}</p>
-                  </div>
-                ))}
+                {(order.logs || []).map((log, index) => {
+                  if (!log) return null;
+                  return (
+                    <div key={index} className="relative">
+                      <div className="absolute -left-[21px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-white shadow-sm"></div>
+                      <div className="text-sm font-bold text-gray-900">{log.status}</div>
+                      <div className="text-xs text-gray-500 mb-1">{log.timestamp}</div>
+                      <p className="text-sm text-gray-600">{log.description}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

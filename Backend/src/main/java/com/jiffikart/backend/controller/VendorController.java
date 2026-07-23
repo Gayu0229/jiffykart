@@ -418,7 +418,7 @@ public class VendorController {
                 .material(material)
                 .showOnHome(showOnHome)
                 .showOnJiffyStreet(showOnJiffyStreet)
-                .showOnJiffyCafe(shop.getVendorType() == VendorType.STREET_HUB ? true : showOnJiffyCafe)
+                .showOnJiffyCafe(shop.getVendorType() == VendorType.STREET_HUB_VENDOR ? true : showOnJiffyCafe)
                 .image(imageUrl)
                 .shop(shop)
                 .status(productStatus)
@@ -495,7 +495,7 @@ public class VendorController {
         if (material != null) product.setMaterial(material);
         if (showOnHome != null) product.setShowOnHome(showOnHome);
         if (showOnJiffyStreet != null) product.setShowOnJiffyStreet(showOnJiffyStreet);
-        if (shop.getVendorType() == VendorType.STREET_HUB) {
+        if (shop.getVendorType() == VendorType.STREET_HUB_VENDOR) {
             product.setShowOnJiffyCafe(true);
         } else if (showOnJiffyCafe != null) {
             product.setShowOnJiffyCafe(showOnJiffyCafe);

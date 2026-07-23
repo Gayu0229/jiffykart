@@ -746,12 +746,46 @@ class JiffyAPI {
 
   async getVendorPayouts(): Promise<VendorPaymentProfile[]> {
     const response = await backend.get('/admin/payments/vendors');
-    return response.data;
+    return (response.data || []).map((v: any) => ({
+      vendorId: String(v.vendorId),
+      vendorName: `${v.shopName} (${v.ownerName})`,
+      shopName: v.shopName,
+      ownerName: v.ownerName,
+      phone: v.phone || 'N/A',
+      email: v.email || 'N/A',
+      category: 'General',
+      kycStatus: 'Verified',
+      totalEarnings: v.walletBalance || 0,
+      commissionDeducted: 0,
+      refundsDeducted: 0,
+      penalties: 0,
+      tds: 0,
+      netPayable: v.pendingPayout || 0,
+      walletBalance: v.walletBalance || 0,
+      status: v.pendingPayout > 0 ? 'Pending' : 'Completed',
+      settlementCycle: 'Weekly',
+      paymentMethod: 'Bank Transfer',
+      lastPayoutDate: v.lastPayoutDate ? new Date(v.lastPayoutDate).toLocaleDateString() : 'N/A',
+      bankDetails: {
+        accountName: v.ownerName,
+        bankName: 'N/A',
+        accountNumber: 'N/A',
+        ifsc: 'N/A'
+      }
+    }));
   }
 
   async getVendorWalletHistory(vendorId: string | number): Promise<any[]> {
     const response = await backend.get(`/admin/payments/vendors/${vendorId}/wallet-history`);
-    return response.data;
+    return (response.data || []).map((tx: any) => ({
+      id: String(tx.id),
+      date: tx.date ? new Date(tx.date).toLocaleDateString() : new Date().toLocaleDateString(),
+      amount: tx.amount,
+      type: tx.type === 'credit' ? 'Credit' : 'Debit',
+      reason: tx.description || 'Adjustment',
+      addedBy: 'Admin',
+      status: tx.status === 'completed' ? 'Success' : 'Failed'
+    }));
   }
 
   async addWalletFunds(vendorId: string | number, amount: number, reason: string): Promise<any> {

@@ -248,7 +248,7 @@ public class AuthService {
             // Security: Same message for both invalid user and invalid password
             throw new RuntimeException("Invalid credentials.");
         }
-
+    
         User user = userOpt.get();
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials.");
@@ -260,6 +260,7 @@ public class AuthService {
 
         return generateAuthResponse(user);
     }
+
 
     private AuthResponse generateAuthResponse(User user) {
         // Prepare JWT Claims

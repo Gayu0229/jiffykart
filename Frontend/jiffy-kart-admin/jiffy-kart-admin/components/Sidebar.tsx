@@ -21,7 +21,8 @@ import {
   MonitorPlay,
   Zap,
   Crown,
-  Coffee
+  Coffee,
+  CalendarDays
 } from 'lucide-react';
 
 interface NavItem {
@@ -208,6 +209,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, userRole = 'S
       allowedRoles: ['Super Admin', 'Manager', 'Support Agent', 'Franchise Owner'],
       items: [
         'Support Tickets'
+      ]
+    },
+    {
+      title: 'Restaurant Bookings',
+      icon: CalendarDays,
+      allowedRoles: ['Super Admin', 'Manager'],
+      items: [
+        'Live Reservations'
       ]
     }
     // ,

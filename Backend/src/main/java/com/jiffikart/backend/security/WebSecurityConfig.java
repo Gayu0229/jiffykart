@@ -26,6 +26,9 @@ public class WebSecurityConfig {
     @Autowired
     private AuthTokenFilter authTokenFilter;
 
+    @org.springframework.beans.factory.annotation.Value("${jiffikart.cors.allowed-origins:http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:5173,http://localhost:5174,http://localhost:5175,https://d16doz46x583qo.cloudfront.net,https://d8mbqkxyxb6oo.cloudfront.net,https://d1bluvlr9vpwsp.cloudfront.net}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -52,6 +55,10 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // Table discovery endpoints (read-only, no auth needed for browsing)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/tables/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/shop/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -74,19 +81,11 @@ public class WebSecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:3002",
-                "http://localhost:3003",
-                "http://localhost:3004",
-                "http://localhost:3005",
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175",
-                "https://d16doz46x583qo.cloudfront.net",
-                "https://d8mbqkxyxb6oo.cloudfront.net",
-                "https://d1bluvlr9vpwsp.cloudfront.net"));
+        if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        } else {
+            configuration.setAllowedOrigins(Arrays.asList("*"));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));

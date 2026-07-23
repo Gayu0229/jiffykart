@@ -67,8 +67,10 @@ import JiffyStreetManager from './components/products/JiffyStreetManager';
 import PendingProducts from './components/products/PendingProducts';
 import { NotificationBell } from './components/NotificationBell';
 import SubscriptionManager from './components/subscriptions/SubscriptionManager';
+import { LiveAnalytics } from './components/LiveAnalytics';
 import { VendorFull, Franchise, AdminUser, VendorPaymentProfile, PendingVendor, KYCRequest, Product } from './types';
 import { api } from './services/api';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   // Auth State
@@ -164,9 +166,10 @@ function App() {
       const fetchPayments = async () => {
         try {
           const data = await api.getVendorPayouts();
-          setVendorPayments(data);
+          setVendorPayments(data || []);
         } catch (err) {
-          console.error("Failed to fetch payout data", err);
+          console.error("Vendor Payments API failed:", err);
+          setVendorPayments([]);
         }
       };
       fetchPayments();
@@ -386,6 +389,9 @@ function App() {
       case 'Subscription Users': return <SubscriptionManager defaultTab="subscribers" />;
       case 'Subscription Analytics': return <SubscriptionManager defaultTab="analytics" />;
 
+      // Restaurant Bookings
+      case 'Live Reservations': return <LiveAnalytics />;
+
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
@@ -462,7 +468,9 @@ function App() {
         )}
 
         <main className="flex-1 overflow-auto p-6">
-          {renderContent()}
+          <ErrorBoundary>
+            {renderContent()}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

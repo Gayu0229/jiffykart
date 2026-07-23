@@ -152,7 +152,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                      <button
                         type="button"
                         onClick={() => setLoginType('Admin')}
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${loginType === 'Admin' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${F === 'Admin' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'
                            }`}
                      >
                         HQ Admin

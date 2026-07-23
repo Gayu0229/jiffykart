@@ -32,6 +32,7 @@ public class AuthController {
     @Autowired
     private com.jiffikart.backend.repository.ShopRepository shopRepository;
 
+    
     private com.jiffikart.backend.entity.User getAuthenticatedUser(Authentication authentication) {
         String identifier = authentication.getName();
         try {
@@ -180,6 +181,8 @@ public class AuthController {
         }
     }
 
+
+    // Admin login
     @PostMapping("/login/password")
     public ResponseEntity<?> loginWithPassword(@RequestBody PasswordLoginRequest request) {
         try {

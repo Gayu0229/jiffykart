@@ -14,6 +14,9 @@ import java.util.UUID;
 public class FileStorageService {
 
     private final Path fileStorageLocation;
+    
+    @org.springframework.beans.factory.annotation.Value("${jiffikart.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     public FileStorageService() {
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
@@ -51,7 +54,7 @@ public class FileStorageService {
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            return "http://localhost:8080/uploads/" + fileName;
+            return baseUrl + "/uploads/" + fileName;
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
         }
