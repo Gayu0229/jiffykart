@@ -22,43 +22,107 @@ export const ProductDetailPage: React.FC = () => {
 
    const [product, setProduct] = useState<Product | null>(null);
    const [shop, setShop] = useState<Shop | null>(null);
-   const [isLoading, setIsLoading] = useState(true);
-   const [quantity, setQuantity] = useState(1);
-   const [toast, setToast] = useState<string | null>(null);
    const [reviews, setReviews] = useState<Review[]>([]);
    const [reviewSummary, setReviewSummary] = useState<ReviewSummaryType | null>(null);
    const [showReviewForm, setShowReviewForm] = useState(false);
    const [editingReview, setEditingReview] = useState<Review | undefined>(undefined);
    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
    const [activeMedia, setActiveMedia] = useState<{ type: 'image' | 'video', url: string } | null>(null);
+   const [quantity, setQuantity] = useState(1);
+   const [toast, setToast] = useState<string | null>(null);
+
+   // ── Separate loading states per section ──
+   const [productLoading, setProductLoading] = useState(true);
+   const [shopLoading, setShopLoading] = useState(false);
+   const [reviewsLoading, setReviewsLoading] = useState(false);
+   const [summaryLoading, setSummaryLoading] = useState(false);
+
+   // ── Separate error states per section ──
+   const [productError, setProductError] = useState<string | null>(null);
+   const [shopError, setShopError] = useState<string | null>(null);
+   const [reviewsError, setReviewsError] = useState<string | null>(null);
+
+   // Unified isLoading used by the full-page skeleton
+   const isLoading = productLoading;
+
+   // ── Fetch product ──
+   const fetchProduct = async (productId: string) => {
+      setProductLoading(true);
+      setProductError(null);
+      try {
+         const data = await ApiService.getProductById(productId, areaId);
+         if (data) {
+            setProduct(data);
+            return data;
+         } else {
+            setProductError('Product not found.');
+         }
+      } catch (e) {
+         console.error('[ProductDetailPage] Failed to load product:', e);
+         setProductError('Failed to load product. Please try again.');
+      } finally {
+         setProductLoading(false);
+      }
+      return null;
+   };
+
+   // ── Fetch shop independently ──
+   const fetchShop = async (shopId: string) => {
+      setShopLoading(true);
+      setShopError(null);
+      try {
+         const shopData = await ApiService.getShopById(shopId);
+         setShop(shopData);
+      } catch (e) {
+         console.error('[ProductDetailPage] Failed to load shop info:', e);
+         setShopError('Could not load store info.');
+      } finally {
+         setShopLoading(false);
+      }
+   };
+
+   // ── Fetch reviews independently ──
+   const fetchReviews = async (productId: string) => {
+      setReviewsLoading(true);
+      setReviewsError(null);
+      try {
+         const reviewData = await ApiService.getProductReviews(productId);
+         setReviews(reviewData ?? []);
+      } catch (e) {
+         console.error('[ProductDetailPage] Failed to load product reviews:', e);
+         setReviewsError('Failed to load reviews.');
+      } finally {
+         setReviewsLoading(false);
+      }
+   };
+
+   // ── Fetch review summary independently ──
+   const fetchReviewSummary = async (productId: string) => {
+      setSummaryLoading(true);
+      try {
+         const summaryData = await ApiService.getProductReviewSummary(productId);
+         setReviewSummary(summaryData);
+      } catch (e) {
+         console.error('[ProductDetailPage] Failed to load review summary:', e);
+         // Non-critical — don't show error banner, just leave as null
+      } finally {
+         setSummaryLoading(false);
+      }
+   };
 
    useEffect(() => {
-      const fetchProduct = async () => {
-         setIsLoading(true);
-         try {
-            const data = await ApiService.getProductById(params.productId, areaId);
-            if (data) {
-               setProduct(data);
-               if (data.shop_id) {
-                  const shopData = await ApiService.getShopById(data.shop_id);
-                  setShop(shopData);
-               }
-               // Fetch reviews
-               const reviewData = await ApiService.getProductReviews(params.productId);
-               setReviews(reviewData);
+      if (!params.productId) return;
 
-               // Fetch summary
-               const summaryData = await ApiService.getProductReviewSummary(params.productId);
-               setReviewSummary(summaryData);
-            }
-         } catch (e) {
-            console.error("Failed to load product", e);
-         } finally {
-            setIsLoading(false);
-         }
-      };
-      if (params.productId) fetchProduct();
+      // Step 1: Fetch the product first (critical — needed for shop_id)
+      fetchProduct(params.productId).then(data => {
+         if (!data) return;
+         // Step 2: Fetch shop, reviews, summary independently in parallel
+         const shopPromise = data.shop_id ? fetchShop(data.shop_id) : Promise.resolve();
+         fetchReviews(params.productId);
+         fetchReviewSummary(params.productId);
+      });
    }, [params.productId, areaId]);
+
 
    const handleAddToCart = () => {
       if (!product) return;
@@ -97,17 +161,15 @@ export const ProductDetailPage: React.FC = () => {
       setShowReviewForm(false);
       setEditingReview(undefined);
       setToast(editingReview ? "Review updated! ✨" : "Review submitted! ✨");
-      
-      // Refresh summary and product rating
-      try {
-         const [summary, updatedProd] = await Promise.all([
-            ApiService.getProductReviewSummary(product!.id),
-            ApiService.getProductById(product!.id)
-         ]);
-         setReviewSummary(summary);
-         if (updatedProd) setProduct(updatedProd);
-      } catch (e) {
-         console.error("Refresh after review failed", e);
+
+      // Refresh summary and product rating independently after review
+      if (product?.id) {
+         fetchReviewSummary(product.id).catch(e =>
+            console.error('[ProductDetailPage] Failed to refresh review summary after submit:', e)
+         );
+         fetchProduct(product.id).catch(e =>
+            console.error('[ProductDetailPage] Failed to refresh product after review submit:', e)
+         );
       }
 
       setTimeout(() => setToast(null), 3000);

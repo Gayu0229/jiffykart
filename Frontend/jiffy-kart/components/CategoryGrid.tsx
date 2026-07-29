@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CATEGORIES } from './constants';
 
 interface CategoryGridProps {
@@ -7,6 +7,8 @@ interface CategoryGridProps {
 }
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) => {
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
   return (
     <div className="mb-12">
       <div className="mb-8">
@@ -29,14 +31,17 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) =
                   index % 4 === 2 ? 'bg-emerald-50 text-emerald-600 group-hover:shadow-[0_20px_40px_-10px_rgba(5,150,105,0.4)]' :
                     'bg-amber-50 text-amber-600 group-hover:shadow-[0_20px_40px_-10px_rgba(217,119,6,0.4)]'}
             `}>
-              <img 
-                src={`/assets/images/categories/${cat.id}.png`}
-                alt={cat.name}
-                className="w-full h-full object-contain p-2 sm:p-4 transition-all duration-500 group-hover:drop-shadow-lg mix-blend-multiply"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+              {failedImages.has(cat.id) ? (
+                // Fallback: lucide-react icon when image asset is missing
+                <span className="text-current">{(cat as any).iconComponent}</span>
+              ) : (
+                <img
+                  src={`/assets/images/categories/${cat.id}.png`}
+                  alt={cat.name}
+                  className="w-full h-full object-contain p-2 sm:p-4 transition-all duration-500 group-hover:drop-shadow-lg mix-blend-multiply"
+                  onError={() => setFailedImages(prev => new Set(prev).add(cat.id))}
+                />
+              )}
             </div>
             <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] group-hover:text-slate-900 transition-colors text-center px-1">
               {cat.name}

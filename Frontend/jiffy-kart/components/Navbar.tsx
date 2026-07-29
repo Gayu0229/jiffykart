@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, ShoppingCart, MapPin, Store, User, ChevronDown, Package, Wallet, Menu } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, Store, User, ChevronDown, Package, Wallet, Menu, Utensils } from 'lucide-react';
 import { useNavigation, useAuth } from '../hooks';
 import { LocationPicker } from './LocationPicker';
 import { NotificationBell } from './NotificationBell';
@@ -10,6 +10,7 @@ interface NavbarProps {
   onHomeClick?: () => void;
   onBecomeSellerClick?: () => void;
   onTrackClick?: () => void;
+  onDineOutClick?: () => void;
   onSearch?: (query: string) => void;
   cartCount?: number;
   isLoggedIn?: boolean;
@@ -22,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onHomeClick,
   onBecomeSellerClick,
   onTrackClick,
+  onDineOutClick,
   onSearch,
   cartCount = 0,
   isLoggedIn,
@@ -55,19 +57,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
             </div>
 
-            {/* Location & Search - Stays full width on mobile/tablet, merges on laptop+ */}
+            {/* Location & Search — full width on mobile, inline on laptop+ */}
             <div className="w-full lg:flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:max-w-xl order-3 lg:order-2">
-              <div
-                onClick={() => setIsLocationPickerOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer transition border border-slate-100 shrink-0 shadow-sm sm:w-auto"
-              >
-                <MapPin size={16} className="text-primary shrink-0" />
-                <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-700 truncate max-w-none sm:max-w-[100px] md:max-w-[120px]">
-                  {area !== 'All Areas' ? area : city}
-                </span>
-                <ChevronDown size={14} className="text-slate-400 shrink-0" />
+
+              {/* Mobile row: Location picker + DineOut side by side */}
+              <div className="flex items-center gap-2">
+                <div
+                  onClick={() => setIsLocationPickerOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer transition border border-slate-100 shrink-0 shadow-sm"
+                >
+                  <MapPin size={16} className="text-primary shrink-0" />
+                  <span className="text-[11px] sm:text-xs md:text-sm font-bold text-slate-700 truncate max-w-[90px] sm:max-w-[100px] md:max-w-[120px]">
+                    {area !== 'All Areas' ? area : city}
+                  </span>
+                  <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                </div>
+
+                {/* DineOut — mobile only, sits next to location picker */}
+                <button
+                  onClick={onDineOutClick}
+                  className="lg:hidden flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-2xl transition-all active:scale-95 shadow-md shadow-orange-500/25 shrink-0"
+                >
+                  <Utensils size={14} />
+                  <span>DineOut</span>
+                </button>
               </div>
 
+              {/* Search bar */}
               <div className="flex-1 relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
                   <Search size={18} />
@@ -111,6 +127,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Store size={18} />
                 <span className="hidden xl:inline">Partner</span>
+              </button>
+
+              {/* DineOut Button — desktop only (mobile version is in location row) */}
+              <button
+                onClick={onDineOutClick}
+                className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-black text-xs uppercase tracking-widest px-4 py-2.5 rounded-2xl transition-all active:scale-95 shadow-md shadow-orange-500/25 shrink-0"
+              >
+                <Utensils size={15} />
+                <span>DineOut</span>
               </button>
               {isLoggedIn && <NotificationBell />}
 

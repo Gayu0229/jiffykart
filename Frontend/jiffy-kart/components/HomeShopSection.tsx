@@ -18,8 +18,14 @@ export const HomeShopSection: React.FC<HomeShopSectionProps> = ({ shops, onShopC
           onClick={() => onShopClick(shop.id)}
         >
           <div className="relative aspect-[4/3] overflow-hidden">
-            <img
+            {/* <img
               src={shop.image}
+              alt={shop.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+            /> */}
+            <img
+              src={shop.image || undefined}
               alt={shop.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"

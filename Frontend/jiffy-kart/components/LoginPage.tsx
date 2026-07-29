@@ -8,7 +8,7 @@ interface LoginPageProps {
   onSignupClick: () => void;
   onPrivacyClick: () => void;
   onTermsClick: () => void;
-  onCancellationClick: () => void;
+  onCancellationClick: () => void;    
   message?: string;
 }
 

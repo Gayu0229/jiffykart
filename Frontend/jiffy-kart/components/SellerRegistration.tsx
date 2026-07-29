@@ -1,5 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   User, Smartphone, Mail, Store, Check, Building2,
   Lock, ArrowRight, CheckCircle, ArrowLeft, Briefcase, Eye, EyeOff,
@@ -18,10 +20,6 @@ interface FileUpload {
   file: File | null;
   preview: string;
   name: string;
-}
-
-interface FormErrors {
-  [key: string]: string;
 }
 
 const CATEGORIES = [
@@ -52,7 +50,184 @@ const STATES = [
   'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi',
 ];
 
-// ─── Standalone Components (defined outside to prevent re-mounting) ────
+// ─── ZOD SCHEMAS FOR INDIVIDUAL STEPS ──────────────────────────────────────────
+
+const step1Schema = z.object({
+  fullName: z.string().min(1, 'Full name is required'),
+  mobile: z.string().length(10, 'Enter a valid 10-digit number'),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(6, 'Min 6 characters required'),
+  confirmPassword: z.string().min(6, 'Min 6 characters required'),
+}).refine(data => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+const step2Schema = z.object({
+  businessName: z.string().min(1, 'Business name is required'),
+  businessType: z.string().min(1, 'Select a business type'),
+  category: z.string().optional(),
+  gstNumber: z.string().regex(/^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z0-9]$/, 'Valid 15-character GST is required'),
+  city: z.string().min(1, 'City is required'),
+  area: z.string().min(1, 'Area is required'),
+  state: z.string().min(1, 'State is required'),
+  pincode: z.string().length(6, 'Enter a valid 6-digit pincode'),
+  businessAddress: z.string().min(1, 'Address is required'),
+  openingTime: z.string().min(1, 'Opening time is required'),
+  closingTime: z.string().min(1, 'Closing time is required'),
+  vendorType: z.enum(['VENDOR', 'FOOD_VENDOR', 'STREET_HUB_VENDOR']),
+  cuisineType: z.string().optional(),
+  fssaiNumber: z.string().optional(),
+  foodBusinessType: z.string().optional(),
+  restaurantName: z.string().optional(),
+  foodCategory: z.string().optional(),
+  deliveryRadius: z.string().optional(),
+  kitchenType: z.string().optional(),
+  vegNonVeg: z.string().optional(),
+  restaurantCategory: z.string().optional(),
+  diningType: z.string().optional(),
+  indoorSeats: z.string().optional(),
+  outdoorSeats: z.string().optional(),
+  restaurantCapacity: z.string().optional(),
+  parkingAvailable: z.boolean().optional(),
+  reservationEnabled: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.vendorType === 'VENDOR') {
+    if (!data.category) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['category'],
+        message: 'Select a category',
+      });
+    }
+  }
+
+  if (data.vendorType === 'FOOD_VENDOR' || data.vendorType === 'STREET_HUB_VENDOR') {
+    if (!data.cuisineType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cuisineType'],
+        message: 'Select a cuisine type',
+      });
+    }
+    if (!data.fssaiNumber || data.fssaiNumber.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fssaiNumber'],
+        message: 'FSSAI number is required',
+      });
+    }
+  }
+
+  if (data.vendorType === 'FOOD_VENDOR') {
+    if (!data.foodBusinessType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['foodBusinessType'],
+        message: 'Select a Food Business Type',
+      });
+    } else {
+      const isOnline = data.foodBusinessType === 'ONLINE_FOOD' || data.foodBusinessType === 'BOTH';
+      const isBooking = data.foodBusinessType === 'RESTAURANT_BOOKING' || data.foodBusinessType === 'BOTH';
+
+      if (isOnline || isBooking) {
+        if (!data.restaurantName || data.restaurantName.trim().length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['restaurantName'],
+            message: 'Restaurant Name is required',
+          });
+        }
+      }
+
+      if (isOnline) {
+        if (!data.foodCategory) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['foodCategory'],
+            message: 'Food Category is required',
+          });
+        }
+        if (!data.deliveryRadius) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['deliveryRadius'],
+            message: 'Delivery Radius is required',
+          });
+        }
+        if (!data.kitchenType) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['kitchenType'],
+            message: 'Kitchen Type is required',
+          });
+        }
+        if (!data.vegNonVeg) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['vegNonVeg'],
+            message: 'Veg/Non-Veg type is required',
+          });
+        }
+      }
+
+      if (isBooking) {
+        if (!data.restaurantCategory) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['restaurantCategory'],
+            message: 'Restaurant Category is required',
+          });
+        }
+        if (!data.diningType) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['diningType'],
+            message: 'Dining Type is required',
+          });
+        }
+        if (!data.indoorSeats) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['indoorSeats'],
+            message: 'Indoor Seats count is required',
+          });
+        }
+        if (!data.outdoorSeats) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['outdoorSeats'],
+            message: 'Outdoor Seats count is required',
+          });
+        }
+        if (!data.restaurantCapacity) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['restaurantCapacity'],
+            message: 'Restaurant Capacity is required',
+          });
+        }
+      }
+    }
+  }
+});
+
+const step3Schema = z.object({
+  panNumber: z.string().regex(/^[A-Z]{5}\d{4}[A-Z]$/, 'Enter a valid PAN (e.g. ABCDE1234F)'),
+});
+
+const step4Schema = z.object({
+  accountHolderName: z.string().min(1, 'Account holder name is required'),
+  bankAccountNumber: z.string().min(9, 'Enter a valid account number'),
+  confirmAccountNumber: z.string().min(9, 'Enter a valid account number'),
+  ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Enter a valid IFSC code'),
+  agreed: z.literal(true, { errorMap: () => ({ message: 'You must agree to the terms' }) }),
+}).refine(data => data.bankAccountNumber === data.confirmAccountNumber, {
+  message: 'Account numbers do not match',
+  path: ['confirmAccountNumber'],
+});
+
+// ─── InputField component ──────────────────────────────────────────────────
 const InputField = ({ label, name, type = 'text', placeholder, required = true, icon, suffix, maxLength, value, onChange, error }: {
   label: string; name: string; type?: string; placeholder: string; required?: boolean; icon?: React.ReactNode; suffix?: React.ReactNode; maxLength?: number;
   value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; error?: string;
@@ -76,6 +251,7 @@ const InputField = ({ label, name, type = 'text', placeholder, required = true, 
   </div>
 );
 
+// ─── FileUploadField component ──────────────────────────────────────────────
 const FileUploadField = ({ label, fileState, onUpload, onRemove, error }: {
   label: string; fileState: FileUpload; onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void; onRemove: () => void; error?: string;
 }) => (
@@ -106,12 +282,13 @@ const FileUploadField = ({ label, fileState, onUpload, onRemove, error }: {
   </div>
 );
 
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, onPrivacyClick }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // OTP
+  // OTP State
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otp, setOtp] = useState('');
   const [isOtpVerified, setIsOtpVerified] = useState(false);
@@ -123,60 +300,68 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Form errors
-  const [errors, setErrors] = useState<FormErrors>({});
-
   // Bank auto-populate
   const [bankName, setBankName] = useState('');
   const [fetchingBank, setFetchingBank] = useState(false);
   const [cities, setCities] = useState<any[]>([]);
-
-  useEffect(() => {
-    ApiService.getLocations().then(setCities);
-  }, []);
-
-  // Form data
-  const [formData, setFormData] = useState({
-    // Step 1 – Seller Basics
-    fullName: '',
-    mobile: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    // Step 2 – Business Details
-    businessName: '',
-    businessType: '',
-    category: '',
-    gstNumber: '',
-    city: '',
-    state: 'Tamil Nadu',
-    pincode: '',
-    businessAddress: '',
-    area: '',
-    // Step 3 – KYC
-    panNumber: '',
-    // Step 4 – Bank
-    accountHolderName: '',
-    bankAccountNumber: '',
-    confirmAccountNumber: '',
-    ifscCode: '',
-    agreed: false,
-    // Food Specific
-    vendorType: 'ECOMMERCE',
-    cuisineType: '',
-    fssaiNumber: '',
-    openingTime: '09:00',
-    closingTime: '22:00',
-  });
-
   const [areas, setAreas] = useState<any[]>([]);
   const [loadingAreas, setLoadingAreas] = useState(false);
 
-  // File uploads (Step 3 + Step 4)
+  // File uploads
   const [idProof, setIdProof] = useState<FileUpload>({ file: null, preview: '', name: '' });
   const [businessProof, setBusinessProof] = useState<FileUpload>({ file: null, preview: '', name: '' });
   const [addressProof, setAddressProof] = useState<FileUpload>({ file: null, preview: '', name: '' });
   const [cancelledCheque, setCancelledCheque] = useState<FileUpload>({ file: null, preview: '', name: '' });
+
+  // File errors state
+  const [fileErrors, setFileErrors] = useState<{ [key: string]: string }>({});
+
+  // Form setup using React Hook Form & Zod
+  const { register, handleSubmit, setValue, getValues, watch, trigger, formState: { errors } } = useForm({
+    defaultValues: {
+      fullName: '',
+      mobile: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      businessName: '',
+      businessType: '',
+      category: '',
+      gstNumber: '',
+      city: '',
+      state: 'Tamil Nadu',
+      pincode: '',
+      businessAddress: '',
+      area: '',
+      panNumber: '',
+      accountHolderName: '',
+      bankAccountNumber: '',
+      confirmAccountNumber: '',
+      ifscCode: '',
+      agreed: false,
+      vendorType: 'VENDOR' as 'VENDOR' | 'FOOD_VENDOR' | 'STREET_HUB_VENDOR',
+      cuisineType: '',
+      fssaiNumber: '',
+      openingTime: '09:00',
+      closingTime: '22:00',
+      foodBusinessType: '',
+      restaurantName: '',
+      foodCategory: '',
+      deliveryRadius: '',
+      kitchenType: '',
+      vegNonVeg: '',
+      restaurantCategory: '',
+      diningType: '',
+      indoorSeats: '',
+      outdoorSeats: '',
+      restaurantCapacity: '',
+      parkingAvailable: false,
+      reservationEnabled: false,
+    }
+  });
+
+  const watchVendorType = watch('vendorType');
+  const watchFoodBusinessType = watch('foodBusinessType');
 
   const steps = [
     { id: 1, title: 'Seller Basics', icon: <User size={16} /> },
@@ -185,6 +370,10 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     { id: 4, title: 'Bank', icon: <Landmark size={16} /> },
     { id: 5, title: 'Review', icon: <FileText size={16} /> },
   ];
+
+  useEffect(() => {
+    ApiService.getLocations().then(setCities);
+  }, []);
 
   // OTP Timer
   useEffect(() => {
@@ -199,9 +388,10 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     if (showOtpModal) setTimer(30);
   }, [showOtpModal]);
 
-  // IFSC auto-populate
+  // IFSC lookup
+  const watchIfsc = watch('ifscCode');
   useEffect(() => {
-    const ifsc = formData.ifscCode.toUpperCase();
+    const ifsc = (watchIfsc || '').toUpperCase();
     if (/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
       setFetchingBank(true);
       fetch(`https://ifsc.razorpay.com/${ifsc}`)
@@ -218,11 +408,13 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     } else {
       setBankName('');
     }
-  }, [formData.ifscCode]);
+  }, [watchIfsc]);
 
+  // City change -> Load areas
+  const watchCity = watch('city');
   useEffect(() => {
-    if (formData.city) {
-      const selectedCity = cities.find(c => c.name.toLowerCase() === formData.city.toLowerCase());
+    if (watchCity) {
+      const selectedCity = cities.find(c => c.name.toLowerCase() === watchCity.toLowerCase());
       if (selectedCity) {
         setLoadingAreas(true);
         ApiService.getZones(selectedCity.id)
@@ -234,48 +426,43 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     } else {
       setAreas([]);
     }
-  }, [formData.city, cities]);
+  }, [watchCity, cities]);
 
+  // Form custom handler to manage input transformation
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'mobile') setIsOtpVerified(false);
 
-    // Numeric-only fields
-    if (['mobile', 'pincode', 'bankAccountNumber', 'confirmAccountNumber'].includes(name)) {
-      const num = value.replace(/\D/g, '');
-      if (name === 'mobile' && num.length > 10) return;
-      if (name === 'pincode' && num.length > 6) return;
-      setFormData(prev => ({ ...prev, [name]: num }));
+    let finalValue = value;
+    if (['mobile', 'pincode', 'bankAccountNumber', 'confirmAccountNumber', 'deliveryRadius', 'indoorSeats', 'outdoorSeats', 'restaurantCapacity'].includes(name)) {
+      finalValue = value.replace(/\D/g, '');
+      if (name === 'mobile' && finalValue.length > 10) return;
+      if (name === 'pincode' && finalValue.length > 6) return;
     } else if (name === 'panNumber') {
-      setFormData(prev => ({ ...prev, [name]: value.toUpperCase().slice(0, 10) }));
+      finalValue = value.toUpperCase().slice(0, 10);
     } else if (name === 'ifscCode') {
-      setFormData(prev => ({ ...prev, [name]: value.toUpperCase().slice(0, 11) }));
+      finalValue = value.toUpperCase().slice(0, 11);
     } else if (name === 'gstNumber') {
-      setFormData(prev => ({ ...prev, [name]: value.toUpperCase().slice(0, 15) }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      finalValue = value.toUpperCase().slice(0, 15);
     }
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
-    }
+
+    setValue(name as any, finalValue as any, { shouldValidate: true });
   };
 
   const scrollToTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth' });
 
-  // File handler
+  // File upload handler
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<FileUpload>>
+    setter: React.Dispatch<React.SetStateAction<FileUpload>>,
+    fieldKey: string
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Validate size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be under 5MB');
       return;
     }
-    // Validate type
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowed.includes(file.type)) {
       alert('Only JPG, PNG, WEBP, or PDF files accepted');
@@ -283,80 +470,32 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     }
     const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
     setter({ file, preview, name: file.name });
+    
+    setFileErrors(prev => {
+      const copy = { ...prev };
+      delete copy[fieldKey];
+      return copy;
+    });
   };
 
-  const removeFile = (setter: React.Dispatch<React.SetStateAction<FileUpload>>) => {
+  const removeFile = (setter: React.Dispatch<React.SetStateAction<FileUpload>>, fieldKey: string) => {
     setter({ file: null, preview: '', name: '' });
   };
 
-  // ─── Validation ─────────────────────────────────
-  const validateStep1 = (): boolean => {
-    const e: FormErrors = {};
-    if (!formData.fullName.trim()) e.fullName = 'Full name is required';
-    if (!formData.mobile || formData.mobile.length !== 10) e.mobile = 'Enter a valid 10-digit number';
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = 'Enter a valid email';
-    if (!formData.password || formData.password.length < 6) e.password = 'Min 6 characters required';
-    if (formData.password !== formData.confirmPassword) e.confirmPassword = 'Passwords do not match';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep2 = (): boolean => {
-    const e: FormErrors = {};
-    if (!formData.businessName.trim()) e.businessName = 'Business name is required';
-    if (!formData.businessType) e.businessType = 'Select a business type';
-    if (!formData.category && formData.vendorType === 'ECOMMERCE') e.category = 'Select a category';
-    if (!formData.gstNumber || !/^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z0-9]$/.test(formData.gstNumber)) {
-      e.gstNumber = 'Valid 15-character GST is required';
-    }
-    if (!formData.city.trim()) e.city = 'City is required';
-    if (!formData.area.trim()) e.area = 'Area is required';
-    if (!formData.state) e.state = 'State is required';
-    if (!formData.pincode || formData.pincode.length !== 6) e.pincode = 'Enter a valid 6-digit pincode';
-    if (!formData.businessAddress.trim()) e.businessAddress = 'Address is required';
-
-    if (!formData.openingTime) e.openingTime = 'Opening time is required';
-    if (!formData.closingTime) e.closingTime = 'Closing time is required';
-
-    if (formData.vendorType === 'FOOD' || formData.vendorType === 'STREET_HUB') {
-      if (!formData.cuisineType) e.cuisineType = 'Select a cuisine type';
-      if (!formData.fssaiNumber.trim()) e.fssaiNumber = 'FSSAI number is required';
-    }
-
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep3 = (): boolean => {
-    const e: FormErrors = {};
-    if (!formData.panNumber || !/^[A-Z]{5}\d{4}[A-Z]$/.test(formData.panNumber)) e.panNumber = 'Enter a valid PAN (e.g. ABCDE1234F)';
-    if (!idProof.file) e.idProof = 'ID proof is required';
-    if (!businessProof.file) e.businessProof = 'Business proof is required';
-    if (!addressProof.file) e.addressProof = 'Address proof is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep4 = (): boolean => {
-    const e: FormErrors = {};
-    if (!formData.accountHolderName.trim()) e.accountHolderName = 'Account holder name is required';
-    if (!formData.bankAccountNumber || formData.bankAccountNumber.length < 9) e.bankAccountNumber = 'Enter a valid account number';
-    if (formData.bankAccountNumber !== formData.confirmAccountNumber) e.confirmAccountNumber = 'Account numbers do not match';
-    if (!formData.ifscCode || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(formData.ifscCode)) e.ifscCode = 'Enter a valid IFSC code';
-    if (!cancelledCheque.file) e.cancelledCheque = 'Cancelled cheque is required';
-    if (!formData.agreed) e.agreed = 'You must agree to the terms';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  // ─── Navigation ─────────────────────────────────
+  // Navigations
   const handleNext = async () => {
     if (currentStep === 1) {
-      if (!validateStep1()) return;
+      const step1Result = await step1Schema.safeParseAsync(getValues());
+      if (!step1Result.success) {
+        // Trigger UI error indicators
+        await trigger(['fullName', 'mobile', 'email', 'password', 'confirmPassword']);
+        return;
+      }
+
       if (!isOtpVerified) {
         try {
           setIsLoading(true);
-          await api.post('/auth/login/send-otp', { phone: formData.mobile });
+          await api.post('/auth/login/send-otp', { phone: getValues('mobile') });
           setShowOtpModal(true);
         } catch (err: any) {
           alert(err?.response?.data?.message || 'Failed to send OTP.');
@@ -366,9 +505,49 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
         return;
       }
     }
-    if (currentStep === 2 && !validateStep2()) return;
-    if (currentStep === 3 && !validateStep3()) return;
-    if (currentStep === 4 && !validateStep4()) return;
+
+    if (currentStep === 2) {
+      const step2Result = await step2Schema.safeParseAsync(getValues());
+      if (!step2Result.success) {
+        await trigger([
+          'businessName', 'businessType', 'category', 'gstNumber', 'city', 'area', 'state', 'pincode',
+          'businessAddress', 'openingTime', 'closingTime', 'cuisineType', 'fssaiNumber',
+          'foodBusinessType', 'restaurantName', 'foodCategory', 'deliveryRadius', 'kitchenType',
+          'vegNonVeg', 'restaurantCategory', 'diningType', 'indoorSeats', 'outdoorSeats', 'restaurantCapacity'
+        ]);
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
+      const step3Result = await step3Schema.safeParseAsync(getValues());
+      const fErrs: { [key: string]: string } = {};
+      if (!step3Result.success) {
+        await trigger(['panNumber']);
+      }
+      if (!idProof.file) fErrs.idProof = 'ID proof is required';
+      if (!businessProof.file) fErrs.businessProof = 'Business proof is required';
+      if (!addressProof.file) fErrs.addressProof = 'Address proof is required';
+
+      if (Object.keys(fErrs).length > 0 || !step3Result.success) {
+        setFileErrors(prev => ({ ...prev, ...fErrs }));
+        return;
+      }
+    }
+
+    if (currentStep === 4) {
+      const step4Result = await step4Schema.safeParseAsync(getValues());
+      const fErrs: { [key: string]: string } = {};
+      if (!step4Result.success) {
+        await trigger(['accountHolderName', 'bankAccountNumber', 'confirmAccountNumber', 'ifscCode', 'agreed']);
+      }
+      if (!cancelledCheque.file) fErrs.cancelledCheque = 'Cancelled cheque is required';
+
+      if (Object.keys(fErrs).length > 0 || !step4Result.success) {
+        setFileErrors(prev => ({ ...prev, ...fErrs }));
+        return;
+      }
+    }
 
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
@@ -387,11 +566,9 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/login/verify-otp', { phone: formData.mobile, otp });
+      const res = await api.post('/auth/login/verify-otp', { phone: getValues('mobile'), otp });
       if (res.data?.token) {
-        // Save session so axiosConfig can pick it up
         ApiService._saveSession(res.data.token, res.data.user);
-
         setIsOtpVerified(true);
         setShowOtpModal(false);
         setCurrentStep(2);
@@ -405,10 +582,10 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    // Final check
-    if (!validateStep4()) {
+  const onSubmitForm = async (values: any) => {
+    // Check steps again
+    const finalValid = await step4Schema.safeParseAsync(values);
+    if (!finalValid.success || !cancelledCheque.file) {
       setCurrentStep(4);
       scrollToTop();
       return;
@@ -417,66 +594,84 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     setIsSubmitting(true);
     try {
       const data = new FormData();
-      // 1. User Basics (Required for public registration)
-      data.append('name', formData.fullName);
-      data.append('email', formData.email);
-      data.append('phone', formData.mobile);
-      data.append('password', formData.password);
+      data.append('name', values.fullName);
+      data.append('email', values.email);
+      data.append('phone', values.mobile);
+      data.append('password', values.password);
+      data.append('shopName', values.businessName);
+      data.append('businessType', values.businessType);
+      data.append('category', values.category || '');
+      data.append('gstNumber', values.gstNumber || '');
+      data.append('address', values.businessAddress);
+      data.append('area', values.area);
+      data.append('city', values.city);
+      data.append('state', values.state);
+      data.append('pincode', values.pincode);
 
-      // 2. Business Details
-      data.append('shopName', formData.businessName);
-      data.append('businessType', formData.businessType);
-      data.append('category', formData.category);
-      data.append('gstNumber', formData.gstNumber);
-      data.append('address', formData.businessAddress);
-      data.append('area', formData.area);
-      data.append('city', formData.city);
-      data.append('state', formData.state);
-      data.append('pincode', formData.pincode);
-
-      // 3. KYC
-      data.append('panNumber', formData.panNumber);
+      data.append('panNumber', values.panNumber);
       if (idProof.file) data.append('idProof', idProof.file);
       if (businessProof.file) data.append('businessProof', businessProof.file);
       if (addressProof.file) data.append('addressProof', addressProof.file);
 
-      // 4. Bank
-      data.append('accountHolderName', formData.accountHolderName);
-      data.append('bankAccountNumber', formData.bankAccountNumber);
-      data.append('ifscCode', formData.ifscCode);
+      data.append('accountHolderName', values.accountHolderName);
+      data.append('bankAccountNumber', values.bankAccountNumber);
+      data.append('ifscCode', values.ifscCode);
       if (cancelledCheque.file) data.append('cancelledCheque', cancelledCheque.file);
 
-      // Vendor Type & Universal Business Hours
-      data.append('vendorType', formData.vendorType);
-      data.append('openingTime', formData.openingTime);
-      data.append('closingTime', formData.closingTime);
+      data.append('vendorType', values.vendorType);
+      data.append('openingTime', values.openingTime);
+      data.append('closingTime', values.closingTime);
 
-      if (formData.vendorType === 'FOOD' || formData.vendorType === 'STREET_HUB') {
-        data.append('cuisineType', formData.cuisineType);
-        data.append('fssaiNumber', formData.fssaiNumber);
+      let businessModel = 'ONLINE_STORE';
+      if (values.vendorType === 'FOOD_VENDOR') {
+        businessModel = values.foodBusinessType || '';
+      } else if (values.vendorType === 'STREET_HUB_VENDOR') {
+        businessModel = 'STREET_HUB';
+      }
+      data.append('businessModel', businessModel);
+
+      if (values.vendorType === 'FOOD_VENDOR' || values.vendorType === 'STREET_HUB_VENDOR') {
+        data.append('cuisineType', values.cuisineType || '');
+        data.append('fssaiNumber', values.fssaiNumber || '');
       }
 
-      // Use public endpoint
+      if (values.vendorType === 'FOOD_VENDOR') {
+        data.append('foodBusinessType', values.foodBusinessType || '');
+        data.append('restaurantName', values.restaurantName || '');
+        
+        if (values.foodBusinessType === 'ONLINE_FOOD' || values.foodBusinessType === 'BOTH') {
+          data.append('foodCategory', values.foodCategory || '');
+          data.append('deliveryRadius', values.deliveryRadius || '');
+          data.append('kitchenType', values.kitchenType || '');
+          data.append('vegNonVeg', values.vegNonVeg || '');
+        }
+
+        if (values.foodBusinessType === 'RESTAURANT_BOOKING' || values.foodBusinessType === 'BOTH') {
+          data.append('restaurantCategory', values.restaurantCategory || '');
+          data.append('diningType', values.diningType || '');
+          data.append('indoorSeats', values.indoorSeats || '');
+          data.append('outdoorSeats', values.outdoorSeats || '');
+          data.append('restaurantCapacity', values.restaurantCapacity || '');
+          data.append('parkingAvailable', String(values.parkingAvailable || false));
+          data.append('reservationEnabled', 'true');
+        }
+      }
+
       await api.post('/public/vendor/apply', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setIsSubmitted(true);
       scrollToTop();
     } catch (err: any) {
-      console.error('Submission Error:', err);
-      const msg = err?.response?.data?.message || err?.message || 'Submission failed. Please try again.';
-      alert(`Error: ${msg}`);
+      console.error(err);
+      alert(err?.response?.data?.message || err?.message || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
-
-  // ─── Step Content ────────────────────────────────
   const renderStepContent = () => {
     switch (currentStep) {
-      // ──────── Step 1: Seller Basics ──────────
       case 1:
         return (
           <div className="space-y-5 animate-fade-in">
@@ -485,14 +680,14 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1">Let's get you started</p>
             </div>
 
-            <InputField label="Full Name" name="fullName" placeholder="e.g. Rajesh Kumar" icon={<User size={16} />} value={formData.fullName} onChange={handleChange} error={errors.fullName} />
+            <InputField label="Full Name" name="fullName" placeholder="e.g. Rajesh Kumar" icon={<User size={16} />} value={watch('fullName')} onChange={handleChange} error={errors.fullName?.message} />
 
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Mobile Number <span className="text-red-400">*</span></label>
               <div className="relative">
                 <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                 <input
-                  name="mobile" type="tel" value={formData.mobile} onChange={handleChange}
+                  name="mobile" type="tel" value={watch('mobile')} onChange={handleChange}
                   placeholder="10-digit mobile number"
                   className={`w-full p-4 pl-12 bg-slate-50 border-2 rounded-2xl font-semibold text-slate-900 placeholder-slate-300 focus:bg-white focus:outline-none transition shadow-sm text-sm ${errors.mobile ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'}`}
                 />
@@ -503,43 +698,42 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
                   </div>
                 )}
               </div>
-              {errors.mobile && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.mobile}</p>}
+              {errors.mobile && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.mobile.message}</p>}
             </div>
 
-            <InputField label="Email Address" name="email" type="email" placeholder="seller@example.com" icon={<Mail size={16} />} value={formData.email} onChange={handleChange} error={errors.email} />
+            <InputField label="Email Address" name="email" type="email" placeholder="seller@example.com" icon={<Mail size={16} />} value={watch('email')} onChange={handleChange} error={errors.email?.message} />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Password <span className="text-red-400">*</span></label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                  <input name="password" type={showPass ? 'text' : 'password'} value={formData.password} onChange={handleChange} placeholder="Min 6 chars"
+                  <input name="password" type={showPass ? 'text' : 'password'} value={watch('password')} onChange={handleChange} placeholder="Min 6 chars"
                     className={`w-full p-4 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl font-semibold text-slate-900 placeholder-slate-300 focus:bg-white focus:outline-none transition shadow-sm text-sm ${errors.password ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'}`}
                   />
                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" /> {errors.password}</p>}
+                {errors.password && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" /> {errors.password.message}</p>}
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm <span className="text-red-400">*</span></label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                  <input name="confirmPassword" type={showConfirm ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange} placeholder="Re-enter"
+                  <input name="confirmPassword" type={showConfirm ? 'text' : 'password'} value={watch('confirmPassword')} onChange={handleChange} placeholder="Re-enter"
                     className={`w-full p-4 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl font-semibold text-slate-900 placeholder-slate-300 focus:bg-white focus:outline-none transition shadow-sm text-sm ${errors.confirmPassword ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'}`}
                   />
                   <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {errors.confirmPassword && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" /> {errors.confirmPassword}</p>}
+                {errors.confirmPassword && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" /> {errors.confirmPassword.message}</p>}
               </div>
             </div>
           </div>
         );
 
-      // ──────── Step 2: Business Details ──────────
       case 2:
         return (
           <div className="space-y-5 animate-fade-in">
@@ -551,131 +745,263 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
             <div className="bg-slate-50 p-2 rounded-2xl border-2 border-slate-100 flex gap-2 overflow-x-auto hide-scrollbar">
               <button
                 type="button"
-                onClick={() => setFormData(p => ({ ...p, vendorType: 'ECOMMERCE', category: (p.category === 'Food' || p.category === 'Street Hub') ? '' : p.category }))}
-                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.vendorType === 'ECOMMERCE' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => {
+                  setValue('vendorType', 'VENDOR');
+                  setValue('category', '');
+                }}
+                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${watchVendorType === 'VENDOR' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 E-commerce
               </button>
               <button
                 type="button"
-                onClick={() => setFormData(p => ({ ...p, vendorType: 'FOOD', category: 'Food' }))}
-                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.vendorType === 'FOOD' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => {
+                  setValue('vendorType', 'FOOD_VENDOR');
+                  setValue('category', 'Food');
+                }}
+                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${watchVendorType === 'FOOD_VENDOR' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
               >
-                Restaurant
+                Food
               </button>
               <button
                 type="button"
-                onClick={() => setFormData(p => ({ ...p, vendorType: 'STREET_HUB', category: 'Food' }))}
-                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.vendorType === 'STREET_HUB' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => {
+                  setValue('vendorType', 'STREET_HUB_VENDOR');
+                  setValue('category', 'Food');
+                }}
+                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${watchVendorType === 'STREET_HUB_VENDOR' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 Street Hub
               </button>
             </div>
 
-            <InputField label="Business / Shop Name" name="businessName" placeholder="e.g. Rajesh General Store" icon={<Store size={16} />} value={formData.businessName} onChange={handleChange} error={errors.businessName} />
+            <InputField label="Business / Shop Name" name="businessName" placeholder="e.g. Rajesh General Store" icon={<Store size={16} />} value={watch('businessName')} onChange={handleChange} error={errors.businessName?.message} />
 
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Business Type <span className="text-red-400">*</span></label>
-              <select name="businessType" value={formData.businessType} onChange={handleChange}
-                className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${formData.businessType ? 'text-slate-900' : 'text-slate-400'} ${errors.businessType ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
+              <select name="businessType" value={watch('businessType')} onChange={handleChange}
+                className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('businessType') ? 'text-slate-900' : 'text-slate-400'} ${errors.businessType ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
                 <option value="">Select business type</option>
                 {BUSINESS_TYPES.map(bt => <option key={bt.value} value={bt.value}>{bt.label}</option>)}
               </select>
-              {errors.businessType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.businessType}</p>}
+              {errors.businessType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.businessType.message}</p>}
             </div>
 
-            {formData.vendorType === 'ECOMMERCE' && (
+            {watchVendorType === 'VENDOR' && (
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category <span className="text-red-400">*</span></label>
-                <select name="category" value={formData.category} onChange={handleChange}
-                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${formData.category ? 'text-slate-900' : 'text-slate-400'} ${errors.category ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
+                <select name="category" value={watch('category')} onChange={handleChange}
+                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('category') ? 'text-slate-900' : 'text-slate-400'} ${errors.category ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
                   <option value="">Select category</option>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                {errors.category && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.category}</p>}
+                {errors.category && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.category.message}</p>}
               </div>
             )}
 
-            {(formData.vendorType === 'FOOD' || formData.vendorType === 'STREET_HUB') && (
+            {watchVendorType === 'FOOD_VENDOR' && (
               <div className="space-y-4 animate-fade-in py-2 bg-indigo-50/30 rounded-3xl p-4 border-2 border-indigo-50">
+                <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 ml-1">Food Business Type <span className="text-red-400">*</span></label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { value: 'ONLINE_FOOD', label: 'Online Food Ordering', desc: 'Customers can browse the menu and place online food orders.' },
+                    { value: 'RESTAURANT_BOOKING', label: 'Restaurant Table Booking', desc: 'Customers can reserve restaurant seats through JiffyKart DineOut.' },
+                    { value: 'BOTH', label: 'Both Services', desc: 'Restaurant supports both Online Food Ordering and Restaurant Table Booking' }
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setValue('foodBusinessType', opt.value, { shouldValidate: true })}
+                      className={`text-left p-3.5 border-2 rounded-2xl transition-all flex flex-col ${watchFoodBusinessType === opt.value ? 'border-indigo-500 bg-white shadow-md' : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'}`}
+                    >
+                      <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        {opt.label}
+                        {watchFoodBusinessType === opt.value && <CheckCircle size={14} className="text-indigo-600" />}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-semibold mt-1">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                {errors.foodBusinessType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.foodBusinessType.message}</p>}
+              </div>
+            )}
+
+            {/* Dynamic Form Sections for Food */}
+            {watchVendorType === 'FOOD_VENDOR' && watchFoodBusinessType && (
+              <div className="space-y-4 animate-fade-in py-2">
+                <div className="space-y-4 bg-slate-50/60 rounded-3xl p-4 border border-slate-100">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200/60 pb-2">Food Vendor Profile</h4>
+                  
+                  <InputField label="Restaurant Name" name="restaurantName" placeholder="e.g. Nazhirya Restaurant" value={watch('restaurantName') || ''} onChange={handleChange} error={errors.restaurantName?.message} />
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cuisine Type <span className="text-red-400">*</span></label>
+                    <select name="cuisineType" value={watch('cuisineType') || ''} onChange={handleChange}
+                      className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('cuisineType') ? 'text-slate-900' : 'text-slate-400'} ${errors.cuisineType ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                      <option value="">Select cuisine</option>
+                      {CUISINE_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    {errors.cuisineType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.cuisineType.message}</p>}
+                  </div>
+
+                  <InputField label="FSSAI License Number" name="fssaiNumber" placeholder="14-digit FSSAI number" maxLength={14} value={watch('fssaiNumber') || ''} onChange={handleChange} error={errors.fssaiNumber?.message} />
+                </div>
+
+                {(watchFoodBusinessType === 'ONLINE_FOOD' || watchFoodBusinessType === 'BOTH') && (
+                  <div className="space-y-4 bg-orange-50/20 rounded-3xl p-4 border border-orange-100/50">
+                    <h4 className="text-[10px] font-black text-orange-400 uppercase tracking-widest border-b border-orange-100/60 pb-2">Online Ordering Details</h4>
+                    
+                    <div>
+                      <label className="block text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2 ml-1">Food Category <span className="text-red-400">*</span></label>
+                      <select name="foodCategory" value={watch('foodCategory') || ''} onChange={handleChange}
+                        className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('foodCategory') ? 'text-slate-900' : 'text-slate-400'} ${errors.foodCategory ? 'border-red-300' : 'border-orange-100/60 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                        <option value="">Select category</option>
+                        {['Veg', 'Non-Veg', 'Bakery', 'Beverages', 'Fast Food', 'Desserts'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      {errors.foodCategory && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.foodCategory.message}</p>}
+                    </div>
+
+                    <InputField label="Delivery Radius (in KM)" name="deliveryRadius" placeholder="e.g. 5" value={watch('deliveryRadius') || ''} onChange={handleChange} error={errors.deliveryRadius?.message} />
+
+                    <div>
+                      <label className="block text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2 ml-1">Kitchen Type <span className="text-red-400">*</span></label>
+                      <select name="kitchenType" value={watch('kitchenType') || ''} onChange={handleChange}
+                        className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('kitchenType') ? 'text-slate-900' : 'text-slate-400'} ${errors.kitchenType ? 'border-red-300' : 'border-orange-100/60 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                        <option value="">Select kitchen type</option>
+                        {['Cloud Kitchen', 'Dine-in Kitchen', 'QSR (Quick Service Restaurant)', 'Bakery'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      {errors.kitchenType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.kitchenType.message}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2 ml-1">Veg / Non-Veg <span className="text-red-400">*</span></label>
+                      <select name="vegNonVeg" value={watch('vegNonVeg') || ''} onChange={handleChange}
+                        className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('vegNonVeg') ? 'text-slate-900' : 'text-slate-400'} ${errors.vegNonVeg ? 'border-red-300' : 'border-orange-100/60 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                        <option value="">Select option</option>
+                        {['Veg Only', 'Non-Veg Only', 'Both'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      {errors.vegNonVeg && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.vegNonVeg.message}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {(watchFoodBusinessType === 'RESTAURANT_BOOKING' || watchFoodBusinessType === 'BOTH') && (
+                  <div className="space-y-4 bg-purple-50/20 rounded-3xl p-4 border border-purple-100/50">
+                    <h4 className="text-[10px] font-black text-purple-400 uppercase tracking-widest border-b border-purple-100/60 pb-2">Table Booking Details</h4>
+                    
+                    <div>
+                      <label className="block text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2 ml-1">Restaurant Category <span className="text-red-400">*</span></label>
+                      <select name="restaurantCategory" value={watch('restaurantCategory') || ''} onChange={handleChange}
+                        className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('restaurantCategory') ? 'text-slate-900' : 'text-slate-400'} ${errors.restaurantCategory ? 'border-red-300' : 'border-purple-100/60 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                        <option value="">Select category</option>
+                        {['Fine Dining', 'Casual Dining', 'Cafe', 'Bar & Lounge', 'Buffet'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      {errors.restaurantCategory && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.restaurantCategory.message}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2 ml-1">Dining Type <span className="text-red-400">*</span></label>
+                      <select name="diningType" value={watch('diningType') || ''} onChange={handleChange}
+                        className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('diningType') ? 'text-slate-900' : 'text-slate-400'} ${errors.diningType ? 'border-red-300' : 'border-purple-100/60 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                        <option value="">Select dining type</option>
+                        {['Family', 'Romantic', 'Corporate', 'Casual'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      {errors.diningType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.diningType.message}</p>}
+                    </div>
+
+                    <InputField label="Indoor Seats" name="indoorSeats" placeholder="e.g. 40" value={watch('indoorSeats') || ''} onChange={handleChange} error={errors.indoorSeats?.message} />
+                    <InputField label="Outdoor Seats" name="outdoorSeats" placeholder="e.g. 20" value={watch('outdoorSeats') || ''} onChange={handleChange} error={errors.outdoorSeats?.message} />
+                    <InputField label="Restaurant Capacity" name="restaurantCapacity" placeholder="e.g. 60" value={watch('restaurantCapacity') || ''} onChange={handleChange} error={errors.restaurantCapacity?.message} />
+
+                    <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-slate-100 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setValue('parkingAvailable', !watch('parkingAvailable'), { shouldValidate: true })}
+                        className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-all ${watch('parkingAvailable') ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'}`}
+                      >
+                        {watch('parkingAvailable') && <Check size={14} className="text-white" />}
+                      </button>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Parking Available</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(watchVendorType === 'FOOD_VENDOR' || watchVendorType === 'STREET_HUB_VENDOR') && !watchFoodBusinessType && (
+              <div className="space-y-4 bg-slate-50 p-4 border border-slate-100 rounded-3xl">
+                <InputField label="FSSAI License Number" name="fssaiNumber" placeholder="14-digit FSSAI number" maxLength={14} value={watch('fssaiNumber') || ''} onChange={handleChange} error={errors.fssaiNumber?.message} />
                 <div>
-                  <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 ml-1">Cuisine Type <span className="text-red-400">*</span></label>
-                  <select name="cuisineType" value={formData.cuisineType} onChange={handleChange}
-                    className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${formData.cuisineType ? 'text-slate-900' : 'text-slate-400'} ${errors.cuisineType ? 'border-red-300' : 'border-indigo-100 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cuisine Type <span className="text-red-400">*</span></label>
+                  <select name="cuisineType" value={watch('cuisineType') || ''} onChange={handleChange}
+                    className={`w-full p-4 bg-white border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('cuisineType') ? 'text-slate-900' : 'text-slate-400'} ${errors.cuisineType ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'} focus:outline-none transition shadow-sm`}>
                     <option value="">Select cuisine</option>
                     {CUISINE_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  {errors.cuisineType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.cuisineType}</p>}
+                  {errors.cuisineType && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.cuisineType.message}</p>}
                 </div>
-
-                <InputField label="FSSAI License Number" name="fssaiNumber" placeholder="14-digit FSSAI number" maxLength={14} value={formData.fssaiNumber} onChange={handleChange} error={errors.fssaiNumber} />
-
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Opening Time <span className="text-red-400">*</span></label>
-                <input type="time" name="openingTime" value={formData.openingTime} onChange={handleChange}
+                <input type="time" name="openingTime" value={watch('openingTime')} onChange={handleChange}
                   className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-semibold text-sm text-slate-900 focus:bg-white focus:border-indigo-400 focus:outline-none transition shadow-sm" />
-                {errors.openingTime && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" />{errors.openingTime}</p>}
+                {errors.openingTime && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" />{errors.openingTime.message}</p>}
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Closing Time <span className="text-red-400">*</span></label>
-                <input type="time" name="closingTime" value={formData.closingTime} onChange={handleChange}
+                <input type="time" name="closingTime" value={watch('closingTime')} onChange={handleChange}
                   className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-semibold text-sm text-slate-900 focus:bg-white focus:border-indigo-400 focus:outline-none transition shadow-sm" />
-                {errors.closingTime && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" />{errors.closingTime}</p>}
+                {errors.closingTime && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1"><AlertCircle size={10} className="inline mr-0.5" />{errors.closingTime.message}</p>}
               </div>
             </div>
 
-            {/* GST Number */}
-            <div className="animate-fade-in">
-              <InputField label="GST Number" name="gstNumber" placeholder="e.g. 22AAAAA0000A1Z5" maxLength={15} value={formData.gstNumber} onChange={handleChange} error={errors.gstNumber} />
-            </div>
+            <InputField label="GST Number" name="gstNumber" placeholder="e.g. 22AAAAA0000A1Z5" maxLength={15} value={watch('gstNumber')} onChange={handleChange} error={errors.gstNumber?.message} />
 
             <div className="pt-1">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Business Address <span className="text-red-400">*</span></label>
-              <textarea name="businessAddress" value={formData.businessAddress} onChange={handleChange} rows={2} placeholder="Full street address, landmark"
+              <textarea name="businessAddress" value={watch('businessAddress')} onChange={handleChange} rows={2} placeholder="Full street address, landmark"
                 className={`w-full p-4 bg-slate-50 border-2 rounded-2xl font-semibold text-slate-900 placeholder-slate-300 focus:bg-white focus:outline-none transition shadow-sm text-sm resize-none ${errors.businessAddress ? 'border-red-300' : 'border-slate-100 focus:border-indigo-400'}`} />
-              {errors.businessAddress && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.businessAddress}</p>}
+              {errors.businessAddress && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.businessAddress.message}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">City <span className="text-red-400">*</span></label>
-                <select name="city" value={formData.city} onChange={handleChange}
-                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${formData.city ? 'text-slate-900' : 'text-slate-400'} ${errors.city ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
+                <select name="city" value={watch('city')} onChange={handleChange}
+                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('city') ? 'text-slate-900' : 'text-slate-400'} ${errors.city ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm`}>
                   <option value="">Select city</option>
                   {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
-                {errors.city && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.city}</p>}
+                {errors.city && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.city.message}</p>}
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Area / Neighborhood <span className="text-red-400">*</span></label>
-                <select name="area" value={formData.area} onChange={handleChange} disabled={!formData.city || loadingAreas}
-                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${formData.area ? 'text-slate-900' : 'text-slate-400'} ${errors.area ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm disabled:opacity-50`}>
+                <select name="area" value={watch('area')} onChange={handleChange} disabled={!watch('city') || loadingAreas}
+                  className={`w-full p-4 bg-slate-100 border-2 rounded-2xl font-semibold text-sm appearance-none ${watch('area') ? 'text-slate-900' : 'text-slate-400'} ${errors.area ? 'border-red-300' : 'border-slate-200 focus:border-indigo-400'} focus:bg-white focus:outline-none transition shadow-sm disabled:opacity-50`}>
                   <option value="">{loadingAreas ? 'Loading areas...' : 'Select area'}</option>
                   {areas.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
                   <option value="Other">Other</option>
                 </select>
-                {errors.area && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.area}</p>}
+                {errors.area && <p className="text-red-400 text-[10px] font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.area.message}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">State <span className="text-red-400">*</span></label>
-                <select name="state" value={formData.state} onChange={handleChange}
+                <select name="state" value={watch('state')} onChange={handleChange}
                   className="w-full p-4 bg-slate-100 border-2 border-slate-200 rounded-2xl font-semibold text-sm text-slate-900 focus:bg-white focus:border-indigo-400 focus:outline-none transition shadow-sm appearance-none">
                   {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <InputField label="Pincode" name="pincode" placeholder="600001" maxLength={6} value={formData.pincode} onChange={handleChange} error={errors.pincode} />
+              <InputField label="Pincode" name="pincode" placeholder="600001" maxLength={6} value={watch('pincode')} onChange={handleChange} error={errors.pincode?.message} />
             </div>
           </div>
         );
 
-      // ──────── Step 3: KYC & Documents ──────────
       case 3:
         return (
           <div className="space-y-5 animate-fade-in">
@@ -684,7 +1010,7 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1">Identity verification</p>
             </div>
 
-            <InputField label="PAN Number" name="panNumber" placeholder="e.g. ABCDE1234F" maxLength={10} icon={<CreditCard size={16} />} value={formData.panNumber} onChange={handleChange} error={errors.panNumber} />
+            <InputField label="PAN Number" name="panNumber" placeholder="e.g. ABCDE1234F" maxLength={10} icon={<CreditCard size={16} />} value={watch('panNumber')} onChange={handleChange} error={errors.panNumber?.message} />
 
             <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100">
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">📋 Upload Guidelines</p>
@@ -693,13 +1019,12 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
               </p>
             </div>
 
-            <FileUploadField label="ID Proof (Aadhaar / Voter ID / Passport)" fileState={idProof} onUpload={(e) => handleFileUpload(e, setIdProof)} onRemove={() => removeFile(setIdProof)} error={errors.idProof} />
-            <FileUploadField label="Business Proof (Shop License / GST Certificate)" fileState={businessProof} onUpload={(e) => handleFileUpload(e, setBusinessProof)} onRemove={() => removeFile(setBusinessProof)} error={errors.businessProof} />
-            <FileUploadField label="Address Proof (Utility Bill / Rent Agreement)" fileState={addressProof} onUpload={(e) => handleFileUpload(e, setAddressProof)} onRemove={() => removeFile(setAddressProof)} error={errors.addressProof} />
+            <FileUploadField label="ID Proof (Aadhaar / Voter ID / Passport)" fileState={idProof} onUpload={(e) => handleFileUpload(e, setIdProof, 'idProof')} onRemove={() => removeFile(setIdProof, 'idProof')} error={fileErrors.idProof} />
+            <FileUploadField label="Business Proof (Shop License / GST Certificate)" fileState={businessProof} onUpload={(e) => handleFileUpload(e, setBusinessProof, 'businessProof')} onRemove={() => removeFile(setBusinessProof, 'businessProof')} error={fileErrors.businessProof} />
+            <FileUploadField label="Address Proof (Utility Bill / Rent Agreement)" fileState={addressProof} onUpload={(e) => handleFileUpload(e, setAddressProof, 'addressProof')} onRemove={() => removeFile(setAddressProof, 'addressProof')} error={fileErrors.addressProof} />
           </div>
         );
 
-      // ──────── Step 4: Bank Details ──────────
       case 4:
         return (
           <div className="space-y-5 animate-fade-in">
@@ -708,13 +1033,13 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1">For payouts & settlements</p>
             </div>
 
-            <InputField label="Account Holder Name" name="accountHolderName" placeholder="As per bank records" icon={<User size={16} />} value={formData.accountHolderName} onChange={handleChange} error={errors.accountHolderName} />
-            <InputField label="Account Number" name="bankAccountNumber" placeholder="Enter account number" icon={<Landmark size={16} />} value={formData.bankAccountNumber} onChange={handleChange} error={errors.bankAccountNumber} />
-            <InputField label="Re-enter Account Number" name="confirmAccountNumber" placeholder="Confirm account number" icon={<Landmark size={16} />} value={formData.confirmAccountNumber} onChange={handleChange} error={errors.confirmAccountNumber} />
+            <InputField label="Account Holder Name" name="accountHolderName" placeholder="As per bank records" icon={<User size={16} />} value={watch('accountHolderName')} onChange={handleChange} error={errors.accountHolderName?.message} />
+            <InputField label="Account Number" name="bankAccountNumber" placeholder="Enter account number" icon={<Landmark size={16} />} value={watch('bankAccountNumber')} onChange={handleChange} error={errors.bankAccountNumber?.message} />
+            <InputField label="Re-enter Account Number" name="confirmAccountNumber" placeholder="Confirm account number" icon={<Landmark size={16} />} value={watch('confirmAccountNumber')} onChange={handleChange} error={errors.confirmAccountNumber?.message} />
 
             <div>
               <InputField label="IFSC Code" name="ifscCode" placeholder="e.g. SBIN0001234" maxLength={11} icon={<IndianRupee size={16} />}
-                value={formData.ifscCode} onChange={handleChange} error={errors.ifscCode}
+                value={watch('ifscCode')} onChange={handleChange} error={errors.ifscCode?.message}
                 suffix={fetchingBank ? <span className="text-[9px] text-indigo-400 font-bold animate-pulse">Looking up...</span> : undefined}
               />
               {bankName && (
@@ -725,24 +1050,23 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
               )}
             </div>
 
-            <FileUploadField label="Cancelled Cheque / Passbook Front Page" fileState={cancelledCheque} onUpload={(e) => handleFileUpload(e, setCancelledCheque)} onRemove={() => removeFile(setCancelledCheque)} error={errors.cancelledCheque} />
+            <FileUploadField label="Cancelled Cheque / Passbook Front Page" fileState={cancelledCheque} onUpload={(e) => handleFileUpload(e, setCancelledCheque, 'cancelledCheque')} onRemove={() => removeFile(setCancelledCheque, 'cancelledCheque')} error={fileErrors.cancelledCheque} />
 
-            {/* Agreement */}
             <div className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition ${errors.agreed ? 'border-red-200 bg-red-50/30' : 'border-slate-100 bg-slate-50'}`}>
-              <button type="button" onClick={() => { setFormData(p => ({ ...p, agreed: !p.agreed })); if (errors.agreed) setErrors(p => { const n = { ...p }; delete n.agreed; return n; }); }}
-                className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-all mt-0.5 ${formData.agreed ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'}`}>
-                {formData.agreed && <Check size={14} className="text-white" />}
+              <button type="button" onClick={() => { setValue('agreed', !watch('agreed'), { shouldValidate: true }); }}
+                className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-all mt-0.5 ${watch('agreed') ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'}`}>
+                {watch('agreed') && <Check size={14} className="text-white" />}
               </button>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
                 I confirm that the information provided is accurate and I agree to the <button type="button" className="text-indigo-500 hover:underline">Terms of Service</button> and <button type="button" onClick={onPrivacyClick} className="text-indigo-500 hover:underline">Privacy Policy</button>.
               </p>
             </div>
-            {errors.agreed && <p className="text-red-400 text-[10px] font-bold mt-1 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.agreed}</p>}
+            {errors.agreed && <p className="text-red-400 text-[10px] font-bold mt-1 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.agreed.message}</p>}
           </div>
         );
 
-      // ──────── Step 5: Review ──────────
       case 5:
+        const values = getValues();
         return (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center mb-6">
@@ -751,57 +1075,34 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
             </div>
 
             <div className="bg-slate-50/80 rounded-3xl p-6 border-2 border-slate-100 space-y-6">
-              {/* Basics */}
               <div>
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2"><User size={12} /> Personal Details</span>
                   <button onClick={() => { setCurrentStep(1); scrollToTop(); }} className="text-[10px] text-indigo-500 hover:underline cursor-pointer">Edit</button>
                 </h3>
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2">
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Name</span> <span className="text-xs font-bold text-slate-700">{formData.fullName}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Mobile</span> <span className="text-xs font-bold text-slate-700">+91 {formData.mobile}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Email</span> <span className="text-xs font-bold text-slate-700">{formData.email}</span></div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Name</span> <span className="text-xs font-bold text-slate-700">{values.fullName}</span></div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Mobile</span> <span className="text-xs font-bold text-slate-700">+91 {values.mobile}</span></div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Email</span> <span className="text-xs font-bold text-slate-700">{values.email}</span></div>
                 </div>
               </div>
 
-              {/* Business */}
               <div>
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2"><Store size={12} /> Business Info</span>
                   <button onClick={() => { setCurrentStep(2); scrollToTop(); }} className="text-[10px] text-indigo-500 hover:underline cursor-pointer">Edit</button>
                 </h3>
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2">
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Shop Name</span> <span className="text-xs font-bold text-slate-700">{formData.businessName}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Type</span> <span className="text-xs font-bold text-slate-700">{BUSINESS_TYPES.find(b => b.value === formData.businessType)?.label}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Category</span> <span className="text-xs font-bold text-slate-700">{formData.category}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">GST</span> <span className="text-xs font-bold text-slate-700">{formData.gstNumber || 'N/A'}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Hours</span> <span className="text-xs font-bold text-slate-700">{formData.openingTime && formData.closingTime ? `${formData.openingTime} to ${formData.closingTime}` : 'N/A'}</span></div>
-                  <div className="pt-2 border-t border-slate-50 mt-2">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Address</p>
-                    <p className="text-xs font-semibold text-slate-600 leading-relaxed max-w-[200px] ml-auto text-right">
-                      {formData.businessAddress}, {formData.city}, {formData.state} - {formData.pincode}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bank & Docs */}
-              <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-2"><Landmark size={12} /> Banking & Docs</span>
-                  <button onClick={() => { setCurrentStep(4); scrollToTop(); }} className="text-[10px] text-indigo-500 hover:underline cursor-pointer">Edit</button>
-                </h3>
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2">
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Account</span> <span className="text-xs font-bold text-slate-700">•••• {formData.bankAccountNumber.slice(-4)}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">IFSC</span> <span className="text-xs font-bold text-slate-700">{formData.ifscCode}</span></div>
-                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Bank</span> <span className="text-xs font-bold text-emerald-600">{bankName || 'Unknown'}</span></div>
-
-                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-50">
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-lg"><CheckCircle size={10} className="text-emerald-500" /> <span className="text-[9px] font-bold text-slate-500">ID Proof</span></div>
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-lg"><CheckCircle size={10} className="text-emerald-500" /> <span className="text-[9px] font-bold text-slate-500">Business Proof</span></div>
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-lg"><CheckCircle size={10} className="text-emerald-500" /> <span className="text-[9px] font-bold text-slate-500">Addr. Proof</span></div>
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-lg"><CheckCircle size={10} className="text-emerald-500" /> <span className="text-[9px] font-bold text-slate-500">Cheque</span></div>
-                  </div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Shop Name</span> <span className="text-xs font-bold text-slate-700">{values.businessName}</span></div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Vendor Type</span> <span className="text-xs font-bold text-slate-700">{values.vendorType === 'FOOD_VENDOR' ? 'Food' : values.vendorType === 'STREET_HUB_VENDOR' ? 'Street Hub' : 'E-commerce'}</span></div>
+                  {values.vendorType === 'FOOD_VENDOR' && (
+                    <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Food Business Type</span> <span className="text-xs font-bold text-slate-700">{values.foodBusinessType}</span></div>
+                  )}
+                  {values.category && (
+                    <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Category</span> <span className="text-xs font-bold text-slate-700">{values.category}</span></div>
+                  )}
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">GST</span> <span className="text-xs font-bold text-slate-700">{values.gstNumber || 'N/A'}</span></div>
+                  <div className="flex justify-between"><span className="text-xs text-slate-400 font-bold">Hours</span> <span className="text-xs font-bold text-slate-700">{values.openingTime} to {values.closingTime}</span></div>
                 </div>
               </div>
             </div>
@@ -820,7 +1121,6 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     }
   };
 
-  // ─── Success Screen ─────────────────────────────
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col items-center justify-center font-sans p-6" ref={topRef}>
@@ -839,10 +1139,8 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     );
   }
 
-  // ─── Main Layout ────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/30 flex flex-col font-sans" ref={topRef}>
-      {/* Header */}
       <div className="bg-white sticky top-0 z-30 px-6 py-4 border-b border-slate-100 flex items-center justify-between shadow-sm">
         <button onClick={onBack} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 transition">
           <ArrowLeft size={22} />
@@ -854,10 +1152,8 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
         <div className="w-10"></div>
       </div>
 
-      {/* Progress Bar */}
       <div className="bg-white px-6 pb-5 pt-4 border-b border-slate-100 sticky top-[64px] z-20">
         <div className="flex justify-between relative max-w-lg mx-auto">
-          {/* Track line */}
           <div className="absolute top-[16px] left-[5%] right-[5%] h-1 bg-slate-100 -z-10 rounded-full"></div>
           <div className="absolute top-[16px] left-[5%] h-1 bg-indigo-500 -z-10 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 90}%` }}></div>
@@ -879,14 +1175,12 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 max-w-lg mx-auto w-full px-6 pb-32 pt-6">
-        <form onSubmit={handleSubmit} autoComplete="off">
+        <form onSubmit={handleSubmit(onSubmitForm)} autoComplete="off">
           {renderStepContent()}
         </form>
       </div>
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg p-5 border-t border-slate-100 flex items-center justify-between z-40">
         <button type="button" onClick={handlePrev} disabled={currentStep === 1}
           className={`flex items-center gap-2 px-5 py-3 font-black text-xs uppercase tracking-widest transition rounded-2xl ${currentStep === 1 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}>
@@ -894,7 +1188,7 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
         </button>
 
         <button type="button"
-          onClick={currentStep < steps.length ? handleNext : handleSubmit}
+          onClick={currentStep < steps.length ? handleNext : handleSubmit(onSubmitForm)}
           disabled={isSubmitting || isLoading}
           className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-60">
           {isSubmitting ? (
@@ -909,10 +1203,9 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
         </button>
       </div>
 
-      {/* OTP Modal */}
       {showOtpModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-dark/80 backdrop-blur-md animate-fade-in" onClick={() => setShowOtpModal(false)}></div>
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-fade-in" onClick={() => setShowOtpModal(false)}></div>
           <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full relative z-10 shadow-2xl animate-slide-up">
             <button onClick={() => setShowOtpModal(false)} className="absolute top-6 right-6 text-slate-300 hover:text-slate-500"><X size={20} /></button>
             <div className="text-center mb-8">
@@ -920,7 +1213,7 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
                 <Smartphone size={32} />
               </div>
               <h3 className="text-xl font-black text-secondary tracking-tight uppercase">Verify Mobile</h3>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">OTP sent to +91 {formData.mobile}</p>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">OTP sent to +91 {getValues('mobile')}</p>
             </div>
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <input type="text" maxLength={4} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -930,7 +1223,7 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
                   <p className="text-[10px] text-slate-400 font-bold">Resend OTP in <span className="text-indigo-500">{timer}s</span></p>
                 ) : (
                   <button type="button" onClick={async () => {
-                    try { await api.post('/auth/login/send-otp', { phone: formData.mobile }); setTimer(30); } catch { alert('Failed to resend'); }
+                    try { await api.post('/auth/login/send-otp', { phone: getValues('mobile') }); setTimer(30); } catch { alert('Failed to resend'); }
                   }} className="text-[10px] text-indigo-500 font-black uppercase hover:underline">Resend OTP</button>
                 )}
               </div>

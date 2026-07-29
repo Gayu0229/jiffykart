@@ -52,7 +52,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onLogout, onTrackOrder
   const [dbAddresses, setDbAddresses] = useState<Address[]>([]);
   const [dbPayments, setDbPayments] = useState<PaymentMethod[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // ── Separate loading states per section ──
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
+
+  // Unified isLoading for full-page skeleton (profile is the most critical)
+  const isLoading = profileLoading;
+
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Modals
@@ -77,31 +86,84 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onLogout, onTrackOrder
     setTimeout(() => setToast(null), 5000);
   };
 
-  const fetchData = async () => {
-    if (!user) return;
-    setIsLoading(true);
+  // ── Fetch profile independently ──
+  const fetchProfile = async () => {
+    setProfileLoading(true);
     try {
-      const [profile, ordersData, addrs, payments] = await Promise.all([
-        ApiService.getProfile(),
-        ApiService.getOrders(),
-        ApiService.getAddresses(user.id),
-        ApiService.getPaymentMethods(user.id)
-      ]);
+      const profile = await ApiService.getProfile();
       setUserData(profile);
-      setEditForm({ name: profile.name, gender: profile.gender });
-      setOrders(ordersData);
-      setDbAddresses(addrs);
-      setDbPayments(payments);
+      setEditForm({ name: profile?.name ?? '', gender: profile?.gender ?? 'Not Specified' });
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error('[UserProfile] Failed to load profile:', error);
+      // Fall back to cached auth user — don't show hard error
+      if (user) {
+        setUserData(prev => ({ ...prev, name: user.name ?? '', email: user.email ?? '' }));
+      }
     } finally {
-      setIsLoading(false);
+      setProfileLoading(false);
     }
   };
 
+  // ── Fetch orders independently ──
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const ordersData = await ApiService.getOrders();
+      setOrders(ordersData ?? []);
+    } catch (error) {
+      console.error('[UserProfile] Failed to load orders:', error);
+      setOrders([]); // graceful fallback — show empty state
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  // ── Fetch addresses independently ──
+  const fetchAddresses = async () => {
+    if (!user?.id) return;
+    setAddressesLoading(true);
+    try {
+      const addrs = await ApiService.getAddresses(user.id);
+      setDbAddresses(addrs ?? []);
+    } catch (error) {
+      console.error('[UserProfile] Failed to load addresses:', error);
+      setDbAddresses([]); // graceful fallback
+    } finally {
+      setAddressesLoading(false);
+    }
+  };
+
+  // ── Fetch payment methods independently ──
+  const fetchPayments = async () => {
+    if (!user?.id) return;
+    setPaymentsLoading(true);
+    try {
+      const payments = await ApiService.getPaymentMethods(user.id);
+      setDbPayments(payments ?? []);
+    } catch (error) {
+      console.error('[UserProfile] Failed to load payment methods:', error);
+      setDbPayments([]); // graceful fallback
+    } finally {
+      setPaymentsLoading(false);
+    }
+  };
+
+  // ── Legacy retry helper — retries all sections ──
+  const fetchData = () => {
+    fetchProfile();
+    fetchOrders();
+    fetchAddresses();
+    fetchPayments();
+  };
+
   useEffect(() => {
-    fetchData();
+    if (!user) return;
+    fetchProfile();
+    fetchOrders();
+    fetchAddresses();
+    fetchPayments();
   }, [user]);
+
 
   // ── Save safe fields (name, gender) ──
   const handleSaveProfile = async (e: React.FormEvent) => {

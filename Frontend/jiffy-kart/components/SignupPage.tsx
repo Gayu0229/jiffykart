@@ -171,7 +171,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onBack, onLoginClick, on
                 </div>
                 <input
                   type="text"
-                  placeholder="Aditya Kumar"
+                  placeholder="Prakash"
                   className="w-full pl-12 pr-5 py-4 bg-slate-50 border-2 border-slate-50 rounded-2xl font-bold text-slate-900 outline-none focus:border-primary focus:bg-white transition-all shadow-sm"
                   value={formData.fullName}
                   onChange={e => setFormData({ ...formData, fullName: e.target.value })}

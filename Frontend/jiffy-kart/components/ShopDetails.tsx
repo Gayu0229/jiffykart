@@ -32,36 +32,69 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
 
   const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  // ── Separate loading states per section ──
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  // ── Separate error states per section ──
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+
+  // Keep a unified isLoading for backward-compat (used in full-page skeleton)
+  const isLoading = productsLoading;
+  // Keep a unified error for backward-compat (used in full-page error UI)
+  const error = productsError;
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isShopImageZoomed, setIsShopImageZoomed] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // ── Fetch products independently ──
+  const fetchProducts = useCallback(async () => {
+    setProductsLoading(true);
+    setProductsError(null);
     try {
-      const [prodData, shopRevData] = await Promise.all([
-        ApiService.getProductsByShop(shop.id, areaId),
-        ApiService.getReviews(shop.id)
-      ]);
-      setProducts(prodData);
-      setReviews(shopRevData);
+      const prodData = await ApiService.getProductsByShop(shop.id, areaId);
+      setProducts(prodData ?? []);
     } catch (err) {
-      setError("Failed to load shop details. Please try again.");
+      console.error(`[ShopDetails] Failed to load products for shop ${shop.id}:`, err);
+      setProductsError('Failed to load products. Please try again.');
     } finally {
-      setIsLoading(false);
+      setProductsLoading(false);
     }
   }, [shop.id, areaId]);
 
+  // ── Fetch reviews independently ──
+  const fetchReviews = useCallback(async () => {
+    setReviewsLoading(true);
+    setReviewsError(null);
+    try {
+      const shopRevData = await ApiService.getReviews(shop.id);
+      setReviews(shopRevData ?? []);
+    } catch (err) {
+      console.error(`[ShopDetails] Failed to load reviews for shop ${shop.id}:`, err);
+      setReviewsError('Failed to load reviews.');
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [shop.id]);
+
+  // ── Legacy retry helper (retries both) ──
+  const fetchData = useCallback(() => {
+    fetchProducts();
+    fetchReviews();
+  }, [fetchProducts, fetchReviews]);
+
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchProducts();
+    fetchReviews();
+  }, [fetchProducts, fetchReviews]);
+
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(products.map(p => p.category)))], [products]);
 
@@ -145,6 +178,14 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
           </button>
 
           <div className="flex gap-2">
+            {shop.vendorType === 'FOOD' && (
+              <button
+                onClick={() => navigate('table-booking', { shopId: shop.id })}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-xl border border-white/20 active:scale-95 transition-all"
+              >
+                <Clock size={14} /> Book a Table
+              </button>
+            )}
             {(shop.approvalStatus === 'APPROVED' || shop.kycStatus === 'VERIFIED') && (
               <div className="bg-emerald-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-xl border border-white/20">
                 <Shield size={14} fill="currentColor" /> Verified Store
@@ -404,7 +445,28 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
                     </div>
                   </div>
 
-                {reviews.length === 0 ? (
+                {reviewsError ? (
+                  <div className="flex flex-col items-center justify-center py-16 bg-rose-50 rounded-[3rem] border border-rose-100 text-center gap-4">
+                    <AlertCircle size={40} className="text-rose-400" />
+                    <p className="text-rose-600 font-bold">{reviewsError}</p>
+                    <button
+                      onClick={fetchReviews}
+                      className="flex items-center gap-2 text-xs font-black uppercase tracking-widest bg-rose-500 text-white px-5 py-2.5 rounded-xl active:scale-95 transition-all"
+                    >
+                      <RefreshCw size={14} /> Retry
+                    </button>
+                  </div>
+                ) : reviewsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 animate-pulse">
+                        <div className="h-4 bg-slate-200 rounded w-1/3 mb-3" />
+                        <div className="h-3 bg-slate-100 rounded w-full mb-2" />
+                        <div className="h-3 bg-slate-100 rounded w-2/3" />
+                      </div>
+                    ))}
+                  </div>
+                ) : reviews.length === 0 ? (
                   <div className="text-center p-20 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
                     <MessageSquarePlus className="mx-auto text-slate-300 mb-4" size={48} />
                     <h3 className="text-slate-900 font-black text-xl mb-2">No reviews yet</h3>
@@ -417,10 +479,10 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
                         <div className="flex justify-between items-start mb-6">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary font-black uppercase shadow-sm">
-                              {rev.user?.username?.charAt(0) || 'U'}
+                              {rev.user?.charAt(0) ?? 'U'}
                             </div>
                             <div>
-                              <h4 className="font-bold text-slate-900 leading-tight">{rev.user?.username || 'Verified Customer'}</h4>
+                              <h4 className="font-bold text-slate-900 leading-tight">{rev.user ?? 'Verified Customer'}</h4>
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ordered 3 days ago</p>
                             </div>
                           </div>

@@ -126,7 +126,7 @@ const mapBackendShopToFrontend = (s: any): Shop => {
     isOpen: s.isActive !== undefined ? s.isActive : true,
     approvalStatus: s.approvalStatus,
     kycStatus: s.kycStatus,
-    vendorType: s.vendorType,
+    vendorType: s.vendorType === 'VENDOR' ? 'ECOMMERCE' : (s.vendorType === 'FOOD_VENDOR' ? 'FOOD' : (s.vendorType === 'STREET_HUB_VENDOR' ? 'STREET_HUB' : s.vendorType)),
   };
 };
 

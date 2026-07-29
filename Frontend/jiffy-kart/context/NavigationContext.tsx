@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { BackToast } from '../components/BackToast';
 
 // Added 'cart' to the ViewType union
-export type ViewType = 'home' | 'shops' | 'details' | 'product-detail' | 'cart' | 'profile' | 'tracking' | 'checkout' | 'jiffy-street' | 'jiffy-cafe' | 'login' | 'signup' | 'verify-otp' | 'seller' | 'seller-registration' | 'privacy-policy' | 'terms-and-conditions' | 'cancellation-refund' | 'collections' | 'admin-banners' | 'wishlist' | 'wallet' | 'track-orders' | 'comparison' | 'payment-status' | 'subscription';
+export type ViewType = 'home' | 'shops' | 'details' | 'product-detail' | 'cart' | 'profile' | 'tracking' | 'checkout' | 'jiffy-street' | 'jiffy-cafe' | 'login' | 'signup' | 'verify-otp' | 'seller' | 'seller-registration' | 'privacy-policy' | 'terms-and-conditions' | 'cancellation-refund' | 'collections' | 'admin-banners' | 'wishlist' | 'wallet' | 'track-orders' | 'comparison' | 'payment-status' | 'subscription' | 'table-booking' | 'live-tracking' | 'waitlist' | 'dineout' | 'dineout-restaurant' | 'dineout-booking' | 'dineout-preorder' | 'dineout-review' | 'dineout-success' | 'dineout-waitlist' | 'dineout-prebooking' | 'dineout-dashboard';
 
 interface NavigationState {
   view: ViewType;

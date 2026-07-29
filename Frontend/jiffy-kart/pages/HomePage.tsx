@@ -12,6 +12,7 @@ import { Shop } from '../types';
 import { ShopSkeleton } from '../components/Skeleton';
 import { SlidersHorizontal, Sparkles, CheckCircle2, X, Store, Coffee, ArrowRight } from 'lucide-react';
 import { BlogSection } from '../components/BlogSection';
+import { Footer } from '../components/Footer';
 
 
 export const HomePage: React.FC = () => {
@@ -37,9 +38,10 @@ export const HomePage: React.FC = () => {
         city,
         area: area === 'All Areas' ? undefined : area
       });
-      setShops(fetchedShops);
+      setShops(fetchedShops ?? []);
     } catch (error) {
-      console.error("Failed to load home page data", error);
+      console.error('[HomePage] Failed to load shops for city/area:', { city, area, error });
+      setShops([]); // Graceful fallback — show empty state instead of crashing
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +114,7 @@ export const HomePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <JiffyCafeHomeSection onVisit={() => navigate('jiffy-cafe')} />
       </div>
+
 
       {/* 5. Main Store listings (Filters first) */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12 mb-8">
@@ -232,6 +235,8 @@ export const HomePage: React.FC = () => {
         <BlogSection />
       </div>
 
+      {/* Footer */}
+      <Footer />
 
     </div>
   );

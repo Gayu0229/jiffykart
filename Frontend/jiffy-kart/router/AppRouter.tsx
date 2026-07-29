@@ -6,7 +6,7 @@ import { GeminiChat } from '../components/GeminiChat';
 import { CATEGORIES } from '../components/constants';
 import { ApiService } from '../services/apiService';
 import { Shop } from '../types';
-import { Scale, ArrowRight, X, Plus, User, Package, Wallet, Store } from 'lucide-react';
+import { Scale, ArrowRight, X, Plus, User, Package, Wallet, Store, Utensils } from 'lucide-react';
 
 // Core pages (loaded eagerly — needed on first visit)
 import { HomePage } from '../pages/HomePage';
@@ -36,6 +36,17 @@ const TrackOrdersPage = lazy(() => import('../components/TrackOrdersPage').then(
 const ComparisonPage = lazy(() => import('../pages/ComparisonPage').then(m => ({ default: m.ComparisonPage })));
 const PaymentStatus = lazy(() => import('../components/PaymentStatus').then(m => ({ default: m.PaymentStatus })));
 const SubscriptionPlansPage = lazy(() => import('../components/SubscriptionPlansPage').then(m => ({ default: m.SubscriptionPlansPage })));
+const TableBookingPage = lazy(() => import('../components/TableBookingPage').then(m => ({ default: m.TableBookingPage })));
+const BookingTimelinePage = lazy(() => import('../components/BookingTimelinePage').then(m => ({ default: m.BookingTimelinePage })));
+const WaitlistPage = lazy(() => import('../components/WaitlistPage').then(m => ({ default: m.WaitlistPage })));
+const DineOutPage = lazy(() => import('../components/DineOutPage').then(m => ({ default: m.DineOutPage })));
+const RestaurantDetailsPage = lazy(() => import('../components/RestaurantDetailsPage').then(m => ({ default: m.RestaurantDetailsPage })));
+const DineOutBookingPage = lazy(() => import('../components/DineOutBookingPage').then(m => ({ default: m.DineOutBookingPage })));
+const DineOutPreOrderPage = lazy(() => import('../components/DineOutPreOrderPage').then(m => ({ default: m.DineOutPreOrderPage })));
+const DineOutReviewPage = lazy(() => import('../components/DineOutReviewPage').then(m => ({ default: m.DineOutReviewPage })));
+const DineOutSuccessPage = lazy(() => import('../components/DineOutSuccessPage').then(m => ({ default: m.DineOutSuccessPage })));
+const DineOutWaitlistPage = lazy(() => import('../components/DineOutWaitlistPage').then(m => ({ default: m.DineOutWaitlistPage })));
+const DineOutDashboardPage = lazy(() => import('../components/DineOutDashboardPage').then(m => ({ default: m.DineOutDashboardPage })));
 
 
 export const AppRouter: React.FC = () => {
@@ -87,7 +98,7 @@ export const AppRouter: React.FC = () => {
     }
   }, [params.shopId, cartItems]);
 
-  const isFullWidthView = ['tracking', 'checkout', 'login', 'signup', 'verify-otp', 'seller', 'seller-registration', 'privacy-policy', 'terms-and-conditions', 'cancellation-refund', 'admin-banners', 'payment-status', 'subscription'].includes(view);
+  const isFullWidthView = ['tracking', 'checkout', 'login', 'signup', 'verify-otp', 'seller', 'seller-registration', 'privacy-policy', 'terms-and-conditions', 'cancellation-refund', 'admin-banners', 'payment-status', 'subscription', 'table-booking', 'live-tracking', 'waitlist', 'dineout', 'dineout-restaurant', 'dineout-booking', 'dineout-preorder', 'dineout-review', 'dineout-success', 'dineout-waitlist', 'dineout-prebooking', 'dineout-dashboard'].includes(view);
 
   useEffect(() => {
     const baseTitle = "Jiffy Kart";
@@ -187,6 +198,30 @@ export const AppRouter: React.FC = () => {
       case 'comparison': return <ComparisonPage />;
       case 'payment-status': return <PaymentStatus />;
       case 'subscription': return <SubscriptionPlansPage onBack={() => navigate('home')} isLoggedIn={isLoggedIn} onLoginRequired={() => navigate('login', { redirect: 'subscription' })} />;
+      case 'table-booking': return <TableBookingPage onBack={goBack} shopId={params.shopId} />;
+      case 'live-tracking': return <BookingTimelinePage booking={params.booking} bookingId={params.bookingId} onBack={goBack} />;
+      case 'waitlist': return <WaitlistPage onBack={goBack} shopId={params.shopId} />;
+      case 'dineout': return <DineOutPage onBack={goBack} />;
+      case 'dineout-restaurant': return <RestaurantDetailsPage restaurantId={params.restaurantId} onBack={goBack} />;
+      case 'dineout-booking': return <DineOutBookingPage restaurantId={params.restaurantId || ''} onBack={goBack} />;
+      case 'dineout-preorder': return <DineOutPreOrderPage restaurantId={params.restaurantId || ''} restaurantName={params.restaurantName} seatType={params.seatType} seatIcon={params.seatIcon} date={params.date} timeSlot={params.timeSlot} guestCount={params.guestCount} occasion={params.occasion} onBack={goBack} />;
+      case 'dineout-review': return <DineOutReviewPage restaurantId={params.restaurantId} restaurantName={params.restaurantName} seatType={params.seatType} seatIcon={params.seatIcon} date={params.date} timeSlot={params.timeSlot} guestCount={params.guestCount} occasion={params.occasion} cartItems={params.cartItems} cartTotal={params.cartTotal} onBack={goBack} />;
+      case 'dineout-success': return <DineOutSuccessPage restaurantId={params.restaurantId} restaurantName={params.restaurantName} seatType={params.seatType} date={params.date} timeSlot={params.timeSlot} guestCount={params.guestCount} grandTotal={params.grandTotal} bookingId={params.bookingId} onBack={goBack} />;
+      case 'dineout-waitlist':
+      case 'dineout-prebooking':
+        return <DineOutWaitlistPage
+          restaurantId={params.restaurantId}
+          restaurantName={params.restaurantName}
+          seatType={params.seatType}
+          guestCount={params.guestCount}
+          date={params.date}
+          timeSlot={params.timeSlot}
+          initialQueue={params.initialQueue}
+          initialWait={params.initialWait}
+          onBack={goBack}
+        />;
+      case 'dineout-dashboard':
+        return <DineOutDashboardPage onBack={goBack} />;
       default: return <HomePage />;
     }
   };
@@ -200,6 +235,7 @@ export const AppRouter: React.FC = () => {
           onHomeClick={() => navigate('home')}
           onTrackClick={() => isLoggedIn ? navigate('track-orders') : navigate('login', { redirect: 'track-orders' })}
           onBecomeSellerClick={() => navigate('seller')}
+          onDineOutClick={() => navigate('dineout')}
           onSearch={(query) => navigate('shops', { searchQuery: query, category: '' })}
           cartCount={cartCount}
           isLoggedIn={isLoggedIn}
@@ -268,6 +304,15 @@ export const AppRouter: React.FC = () => {
                   <User size={18} /> Sign In
                 </button>
               )}
+
+              <div className="h-px bg-slate-100 my-2" />
+
+              <button
+                onClick={() => { navigate('dineout'); setIsMenuOpen(false); }}
+                className="flex items-center gap-4 p-4 rounded-2xl font-bold bg-gradient-to-r from-orange-50 to-rose-50 text-orange-600 hover:from-orange-100 hover:to-rose-100 transition border border-orange-100"
+              >
+                <Utensils size={18} /> DineOut — Book a Table
+              </button>
 
               <div className="h-px bg-slate-100 my-2" />
 
