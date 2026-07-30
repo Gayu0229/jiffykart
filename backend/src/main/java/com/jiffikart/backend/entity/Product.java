@@ -79,13 +79,11 @@ public class Product {
     }
 
     @Transient
-    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getShopName() {
         return shop != null ? shop.getName() : null;
     }
 
     @Transient
-    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getVendorName() {
         return shop != null && shop.getOwner() != null ? shop.getOwner().getName() : null;
     }

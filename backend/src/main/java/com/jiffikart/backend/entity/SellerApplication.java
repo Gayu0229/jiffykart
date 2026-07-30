@@ -35,13 +35,29 @@ public class SellerApplication {
     @Enumerated(EnumType.STRING)
     @Column(name = "vendor_type")
     @Builder.Default
-    private VendorType vendorType = VendorType.ECOMMERCE;
+    private VendorType vendorType = VendorType.VENDOR;
 
     // Food Specific
     private String cuisineType;
     private String fssaiNumber;
     private String openingTime;
     private String closingTime;
+
+    private String businessModel;
+    private String foodBusinessType;
+    private String restaurantName;
+    private Double deliveryRadius;
+    private Integer restaurantCapacity;
+    private Integer indoorSeats;
+    private Integer outdoorSeats;
+    @Builder.Default
+    private boolean reservationEnabled = false;
+    private String kitchenType;
+    private String vegNonVeg;
+    private String restaurantCategory;
+    private String diningType;
+    @Builder.Default
+    private boolean parkingAvailable = false;
 
     // Business Details
     private String businessType;

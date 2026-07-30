@@ -8,9 +8,18 @@ import java.util.Date;
 
 @Component
 public class JwtUtils {
-    private final String jwtSecret = "bezKoderSecretKeybezKoderSecretKeybezKoderSecretKey";
-    private final int jwtExpirationMs = 86400000;
-    private final Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    @org.springframework.beans.factory.annotation.Value("${jiffikart.jwt.secret:bezKoderSecretKeybezKoderSecretKeybezKoderSecretKey}")
+    private String jwtSecret;
+
+    @org.springframework.beans.factory.annotation.Value("${jiffikart.jwt.expiration-ms:86400000}")
+    private int jwtExpirationMs;
+
+    private Key key;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
     public String generateJwtToken(String phone, java.util.Map<String, Object> claims) {
         return Jwts.builder()

@@ -21,4 +21,7 @@ public class VendorProfileResponse {
     private String email;
     private String phone;
     private String pincode;
+    private String vendorType;
+    private String businessModel;
+    private Long shopId;
 }

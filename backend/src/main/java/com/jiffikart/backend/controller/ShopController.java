@@ -80,7 +80,7 @@ public class ShopController {
         // Also exclude STREET_HUB vendors from general listings (they are product-only in their own section)
         List<Shop> activeShops = shops.stream()
                 .filter(s -> "APPROVED".equalsIgnoreCase(s.getApprovalStatus()) && Boolean.TRUE.equals(s.getIsActive()))
-                .filter(s -> s.getVendorType() != com.jiffikart.backend.entity.VendorType.STREET_HUB)
+                .filter(s -> s.getVendorType() != com.jiffikart.backend.entity.VendorType.STREET_HUB_VENDOR)
                 .toList();
 
         // Populate active coupons for each shop

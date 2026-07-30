@@ -45,6 +45,12 @@ public class EmailService{
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${jiffikart.client-url:http://localhost:3002}")
+    private String clientUrl;
+
+    @Value("${jiffikart.vendor-url:http://localhost:3001}")
+    private String vendorUrl;
+
     @Autowired
     private OrderRepository orderRepository;
 
@@ -97,9 +103,9 @@ public class EmailService{
                 +
                 "<p>At Jiffy Kart, we strive to bring you the best groceries and essentials delivered right to your doorstep in minutes.</p>"
                 +
-                "<div style='text-align: center; margin: 30px 0;'>" +
-                "<a href='http://localhost:3002' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Start Shopping Now</a>"
-                +
+                "<p style='text-align: center; margin: 30px 0;'>" +
+                "<a href='" + clientUrl + "' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Start Shopping Now</a>" +
+                "</p>"+
                 "</div>" +
                 "<p>If you have any questions, feel free to reply to this email.</p>" +
                 "<p>Best regards,<br><strong>The Jiffy Kart Team</strong></p>" +
@@ -171,9 +177,9 @@ public class EmailService{
                     "<p>Hello <strong>" + userName + "</strong>,</p>" +
                     "<p>We are thrilled to inform you that your seller application for <strong>" + shopName + "</strong> has been approved!</p>" +
                     "<p>You can now access your vendor dashboard, manage your products, and start selling on Jiffy Kart.</p>" +
-                    "<div style='text-align: center; margin: 30px 0;'>" +
-                    "<a href='http://localhost:3001' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Go to Vendor Dashboard</a>" +
-                    "</div>" +
+                    "<p style='text-align: center; margin: 30px 0;'>" +
+                    "<a href='" + vendorUrl + "' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Go to Vendor Dashboard</a>" +
+                    "</p></div>" +
                     "<p>Welcome to the Jiffy Kart Seller Community!</p>" +
                     "<p>Best regards,<br><strong>The Jiffy Kart Team</strong></p>" +
                     "</div>" +
@@ -285,9 +291,9 @@ public class EmailService{
                     "<p style='margin: 5px 0;'><strong>Total Amount:</strong> ₹" + String.format("%.2f", total) + "</p>" +
                     "</div>" +
                     "<p>You can track your order status in the Jiffy Kart app.</p>" +
-                    "<div style='text-align: center; margin: 30px 0;'>" +
-                    "<a href='http://localhost:3002/profile' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>View Order History</a>" +
-                    "</div>" +
+                    "<p style='text-align: center; margin: 30px 0;'>" +
+                    "<a href='" + clientUrl + "/profile' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>View Order History</a>" +
+                    "</p></div>" +
                     "<p>Best regards,<br><strong>The Jiffy Kart Team</strong></p>" +
                     "</div>" +
                     "</body>" +
@@ -321,9 +327,9 @@ public class EmailService{
                     "<p>Hello <strong>" + userName + "</strong>,</p>" +
                     "<p>Good news! Your order <strong>#" + orderId + "</strong> has been accepted by <strong>" + shopName + "</strong> and is now being prepared.</p>" +
                     "<p>We'll notify you when it's out for delivery.</p>" +
-                    "<div style='text-align: center; margin: 30px 0;'>" +
-                    "<a href='http://localhost:3002/tracking' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Track Your Order</a>" +
-                    "</div>" +
+                    "<p style='text-align: center; margin: 30px 0;'>" +
+                    "<a href='" + clientUrl + "/tracking' style='background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Track Your Order</a>" +
+                    "</p></div>" +
                     "<p>Thank you for choosing Jiffy Kart!</p>" +
                     "<p>Best regards,<br><strong>The Jiffy Kart Team</strong></p>" +
                     "</div>" +
@@ -643,9 +649,9 @@ public class EmailService{
             }
 
             htmlContent += "    <p style='color: #475569; font-size: 14px; margin-bottom: 35px; line-height: 1.6;'>You can track every milestone of your request 🛰️ directly through our real-time tracker.</p>" +
-                    "    <div style='text-align: center;'>" +
-                    "      <a href='http://localhost:3002/tracking?orderId=" + orderId + "' style='display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 16px; font-size: 15px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 25px rgba(15,23,42,0.15); transition: all 0.3s ease;'>Track Return Status</a>" +
-                    "    </div>" +
+                    "    <div style='text-align: center; margin-top: 35px; margin-bottom: 25px;'>\n" +
+                    "      <a href='" + clientUrl + "/tracking?orderId=" + orderId + "' style='display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 16px; font-size: 15px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 25px rgba(15,23,42,0.15); transition: all 0.3s ease;'>Track Return Status</a>\n" +
+                    "    </div>\n" +
                     "  </div>" +
                     "  <div style='background-color: #f8fafc; padding: 40px; border-top: 1px solid #f1f5f9; text-align: center;'>" +
                     "    <p style='color: #94a3b8; font-size: 12px; margin: 0;'>&copy; 2026 JiffyKart. All rights reserved.</p>" +

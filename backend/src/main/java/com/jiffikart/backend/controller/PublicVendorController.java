@@ -65,6 +65,19 @@ public class PublicVendorController {
             @RequestParam(value = "fssaiNumber", required = false) String fssaiNumber,
             @RequestParam(value = "openingTime", required = false) String openingTime,
             @RequestParam(value = "closingTime", required = false) String closingTime,
+            @RequestParam(value = "businessModel", required = false) String businessModel,
+            @RequestParam(value = "foodBusinessType", required = false) String foodBusinessType,
+            @RequestParam(value = "restaurantName", required = false) String restaurantName,
+            @RequestParam(value = "deliveryRadius", required = false) Double deliveryRadius,
+            @RequestParam(value = "restaurantCapacity", required = false) Integer restaurantCapacity,
+            @RequestParam(value = "indoorSeats", required = false) Integer indoorSeats,
+            @RequestParam(value = "outdoorSeats", required = false) Integer outdoorSeats,
+            @RequestParam(value = "reservationEnabled", required = false) Boolean reservationEnabled,
+            @RequestParam(value = "kitchenType", required = false) String kitchenType,
+            @RequestParam(value = "vegNonVeg", required = false) String vegNonVeg,
+            @RequestParam(value = "restaurantCategory", required = false) String restaurantCategory,
+            @RequestParam(value = "diningType", required = false) String diningType,
+            @RequestParam(value = "parkingAvailable", required = false) Boolean parkingAvailable,
 
             // Files
             @RequestParam("idProof") MultipartFile idProof,
@@ -134,11 +147,24 @@ public class PublicVendorController {
                 .addressProofUrl(addressProofUrl)
                 .cancelledChequeUrl(cancelledChequeUrl)
                 .status("PENDING")
-                .vendorType(vendorType != null ? VendorType.valueOf(vendorType) : VendorType.ECOMMERCE)
+                .vendorType(vendorType != null ? VendorType.valueOf(vendorType) : VendorType.VENDOR)
                 .cuisineType(cuisineType)
                 .fssaiNumber(fssaiNumber)
                 .openingTime(openingTime)
                 .closingTime(closingTime)
+                .businessModel(businessModel)
+                .foodBusinessType(foodBusinessType)
+                .restaurantName(restaurantName)
+                .deliveryRadius(deliveryRadius)
+                .restaurantCapacity(restaurantCapacity)
+                .indoorSeats(indoorSeats)
+                .outdoorSeats(outdoorSeats)
+                .reservationEnabled(reservationEnabled != null ? reservationEnabled : false)
+                .kitchenType(kitchenType)
+                .vegNonVeg(vegNonVeg)
+                .restaurantCategory(restaurantCategory)
+                .diningType(diningType)
+                .parkingAvailable(parkingAvailable != null ? parkingAvailable : false)
                 .build();
 
         applicationService.submitApplication(application);

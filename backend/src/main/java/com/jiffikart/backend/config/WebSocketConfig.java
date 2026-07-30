@@ -38,12 +38,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // public void registerStompEndpoints(StompEndpointRegistry registry) {
     //     registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
     // }
-
+    
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(
+                    "https://jiffykart.in",
+                    "https://admin.jiffykart.in",
+                    "https://vendor.jiffykart.in"
+                )
+                .withSockJS();
     }
-        
+
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
