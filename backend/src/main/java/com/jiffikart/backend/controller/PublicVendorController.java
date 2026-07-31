@@ -147,7 +147,7 @@ public class PublicVendorController {
                 .addressProofUrl(addressProofUrl)
                 .cancelledChequeUrl(cancelledChequeUrl)
                 .status("PENDING")
-                .vendorType(vendorType != null ? VendorType.valueOf(vendorType) : VendorType.VENDOR)
+                .vendorType(vendorType != null ? ("ECOMMERCE".equalsIgnoreCase(vendorType) ? VendorType.VENDOR : (java.util.Arrays.stream(VendorType.values()).anyMatch(v -> v.name().equalsIgnoreCase(vendorType)) ? VendorType.valueOf(vendorType.toUpperCase()) : VendorType.VENDOR)) : VendorType.VENDOR)
                 .cuisineType(cuisineType)
                 .fssaiNumber(fssaiNumber)
                 .openingTime(openingTime)
