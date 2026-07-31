@@ -64,6 +64,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/ws").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/shops", "/api/shops/**").permitAll()
                         .requestMatchers("/api/banners", "/api/banners/**").permitAll()
@@ -104,9 +105,9 @@ public class WebSecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+            configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
         } else {
-            configuration.setAllowedOrigins(Arrays.asList("*"));
+            configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
