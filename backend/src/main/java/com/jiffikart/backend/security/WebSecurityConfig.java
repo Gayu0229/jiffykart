@@ -6,6 +6,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +65,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
-                        .requestMatchers("/ws").permitAll()
+                         .requestMatchers("/ws").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/shops", "/api/shops/**").permitAll()
                         .requestMatchers("/api/banners", "/api/banners/**").permitAll()
@@ -105,7 +106,11 @@ public class WebSecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-            configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+            List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isEmpty())
+                    .toList();
+            configuration.setAllowedOriginPatterns(origins);
         } else {
             configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         }

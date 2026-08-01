@@ -41,17 +41,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     // @Override
     // public void registerStompEndpoints(StompEndpointRegistry registry) {
-    //     registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+    // registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
     // }
-    
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] patterns;
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-            String[] patterns = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toArray(String[]::new);
-            registry.addEndpoint("/ws").setAllowedOriginPatterns(patterns).withSockJS();
+            patterns = Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isEmpty())
+                    .toArray(String[]::new);
         } else {
-            registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+            patterns = new String[] { "*" };
         }
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(patterns);
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(patterns).withSockJS();
     }
 
     @Override
@@ -59,8 +64,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor =
-                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String authHeader = accessor.getFirstNativeHeader("Authorization");
@@ -73,7 +77,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
                             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities());
-                            
+
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                             accessor.setUser(authentication);
                         }
