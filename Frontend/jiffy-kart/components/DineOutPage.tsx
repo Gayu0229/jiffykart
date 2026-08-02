@@ -553,6 +553,20 @@ export const DineOutPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Load real restaurants from backend
   useEffect(() => {
+    //   setIsLoading(true);
+    // ApiService.getShops({ category: 'Food' })
+    //   .then(fetchedShops => {
+    //     const mapped = fetchedShops.map(mapShopToRestaurant);
+    //     setRestaurants(prev => {
+    //       const ids = new Set(mapped.map(m => m.id));
+    //       const uniquePrev = prev.filter(p => !ids.has(p.id));
+    //       return [...mapped, ...uniquePrev];
+    //     });
+    //   })
+    //   .catch(err => console.error("Failed to load dynamic shops for DineOut", err))
+    //   .finally(() => setIsLoading(false));
+
+
     // Commented out to prevent ERR_CONNECTION_REFUSED since there is no backend code implemented for Dineout yet.
     // setIsLoading(true);
     // ApiService.getShops({ category: 'Food' })

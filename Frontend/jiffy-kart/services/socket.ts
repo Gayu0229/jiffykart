@@ -16,10 +16,29 @@ export const createSocketClient = (onMessageReceived: (topic: string, body: any)
         } as unknown as Client;
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
+    let wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
     console.log('[Socket] Connecting to:', wsUrl);
 
-    const socket = new SockJS(wsUrl);
+    if (window.location.protocol === 'https:' && wsUrl.startsWith('http://')) {
+        if (window.location.hostname.includes('jiffykart.in')) {
+            wsUrl = 'https://api.jiffykart.in/ws';
+        } else {
+            wsUrl = wsUrl.replace('http://', 'https://');
+        }
+        console.log('[Socket] Upgraded WS URL to secure protocol:', wsUrl);
+    }
+
+    let socket;
+    try {
+        socket = new SockJS(wsUrl);
+    } catch (e) {
+        console.error('[Socket] Failed to initialize SockJS:', e);
+        return {
+            deactivate: () => Promise.resolve(),
+            activate: () => {},
+            active: false,
+        } as unknown as Client;
+    }
     const client = new Client({
         webSocketFactory: () => socket,
         connectHeaders: {

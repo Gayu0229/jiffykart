@@ -230,10 +230,12 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* 6. Local Blogs */}
+      {/* 6. Local Blogs - Removed as requested because it displays mock data */}
+      {/* 
       <div className="mt-24">
         <BlogSection />
       </div>
+      */}
 
       {/* Footer */}
       <Footer />

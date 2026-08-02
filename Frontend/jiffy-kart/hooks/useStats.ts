@@ -53,7 +53,23 @@ export const useStats = () => {
   useEffect(() => {
     fetchStats();
 
-    const socket = new SockJS(WS_URL);
+    let wsUrl = WS_URL;
+    if (window.location.protocol === 'https:' && wsUrl.startsWith('http://')) {
+      if (window.location.hostname.includes('jiffykart.in')) {
+        wsUrl = 'https://api.jiffykart.in/ws';
+      } else {
+        wsUrl = wsUrl.replace('http://', 'https://');
+      }
+    }
+
+    let socket;
+    try {
+      socket = new SockJS(wsUrl);
+    } catch (e) {
+      console.error('Failed to initialize SockJS for stats:', e);
+      startPolling();
+      return;
+    }
     const client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => {
