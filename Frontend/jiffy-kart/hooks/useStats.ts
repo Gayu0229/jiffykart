@@ -54,6 +54,14 @@ export const useStats = () => {
     fetchStats();
 
     let wsUrl = WS_URL;
+    
+    // Normalize ws:// and wss:// to http:// and https:// for SockJS compatibility
+    if (wsUrl.startsWith('ws://')) {
+      wsUrl = wsUrl.replace('ws://', 'http://');
+    } else if (wsUrl.startsWith('wss://')) {
+      wsUrl = wsUrl.replace('wss://', 'https://');
+    }
+
     if (window.location.protocol === 'https:' && wsUrl.startsWith('http://')) {
       if (window.location.hostname.includes('jiffykart.in')) {
         wsUrl = 'https://api.jiffykart.in/ws';

@@ -17,6 +17,14 @@ export const createSocketClient = (onMessageReceived: (topic: string, body: any)
     }
 
     let wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
+    
+    // Normalize ws:// and wss:// to http:// and https:// for SockJS compatibility
+    if (wsUrl.startsWith('ws://')) {
+        wsUrl = wsUrl.replace('ws://', 'http://');
+    } else if (wsUrl.startsWith('wss://')) {
+        wsUrl = wsUrl.replace('wss://', 'https://');
+    }
+
     console.log('[Socket] Connecting to:', wsUrl);
 
     if (window.location.protocol === 'https:' && wsUrl.startsWith('http://')) {
