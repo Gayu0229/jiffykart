@@ -101,10 +101,14 @@ public class VerificationService {
 
         if (type == OtpType.MOBILE) {
             userRepository.findFirstByPhoneOrderByIdAsc(normalized).ifPresentOrElse(user -> {
+                boolean wasEnabled = user.getEnabled() != null && user.getEnabled();
                 user.setPhoneVerified(true);
                 user.setEnabled(true);
                 userRepository.save(user);
                 logger.info("User with phone {} phoneVerified & enabled set", normalized);
+                if (!wasEnabled) {
+                    emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+                }
             }, () -> {
                 logger.error("User with phone {} not found after OTP success!", normalized);
             });

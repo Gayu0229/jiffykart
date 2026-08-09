@@ -30,9 +30,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status } = error.response;
-      // Auto-logout on token expiration (401)
-      if (status === 401) {
+      // Auto-logout on token expiration (401) or forbidden role (403)
+      if (status === 401 || status === 403) {
         ApiService.logout();
+        window.location.reload();
       }
     } else if (error.request) {
       console.debug("Remote API offline. Local state maintained.");

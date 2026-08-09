@@ -24,6 +24,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [loginMethod, setLoginMethod] = useState<'otp' | 'password'>('otp');
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
@@ -44,16 +45,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address.');
+    if (!phone || phone.trim().length < 10) {
+      setError('Please enter a valid mobile number.');
       return;
     }
 
     setError('');
     setIsLoading(true);
     try {
-      await ApiService.sendEmailLoginOtp(email);
-      setSuccess('Verification code sent to your email.');
+      await ApiService.sendLoginOtp(phone);
+      setSuccess('Verification code sent to your mobile number.');
       setStep(2);
       setTimer(30);
     } catch (err: any) {
@@ -100,7 +101,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setError('');
     setIsLoading(true);
     try {
-      const data = await ApiService.verifyEmailLoginOtp(email, otp);
+      const data = await ApiService.verifyLoginOtp(phone, otp);
       setSuccess('Verification successful! Welcome back.');
       // Small delay for visual feedback
       setTimeout(() => {
@@ -121,6 +122,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setError('');
     setSuccess('');
     setEmail('');
+    setPhone('');
     setPassword('');
   };
 
@@ -194,7 +196,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <h2 className="text-4xl font-black text-dark mb-2 tracking-tight">Login</h2>
             <p className="text-slate-500 font-medium">
               {loginMethod === 'otp'
-                ? 'Enter your registered email to get started.'
+                ? 'Enter your registered mobile number to get started.'
                 : 'Enter your credentials to access your account.'}
             </p>
           </div>
@@ -221,16 +223,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             step === 1 ? (
               <form onSubmit={handleSendOtp} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number</label>
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                      <Mail size={18} />
+                      <Smartphone size={18} />
                     </div>
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Enter 10-digit mobile number"
+                      maxLength={10}
                       className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-50 rounded-2xl font-bold text-dark outline-none focus:border-primary focus:bg-white transition-all shadow-sm text-lg"
                       required
                       autoFocus
@@ -240,7 +243,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                 <button
                   type="submit"
-                  disabled={isLoading || !email || !email.includes('@')}
+                  disabled={isLoading || !phone || phone.length < 10}
                   className="w-full bg-dark text-white font-black py-5 rounded-2xl shadow-xl hover:bg-primary disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-lg active:scale-[0.98]"
                 >
                   {isLoading ? <Loader2 size={24} className="animate-spin" /> : <>Send OTP <ArrowRight size={22} /></>}
@@ -262,7 +265,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             ) : (
               <form onSubmit={handleVerifyOtp} className="space-y-6 animate-fade-in">
                 <div className="space-y-2 text-center">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Enter 4-digit code sent to {email}</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Enter 4-digit code sent to {phone}</label>
                   <input
                     type="text"
                     maxLength={4}
@@ -276,7 +279,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
 
                 <div className="flex justify-between items-center px-1">
-                  <button type="button" onClick={resetFlow} className="text-[10px] font-black uppercase text-slate-400 hover:text-dark transition">Change Email</button>
+                  <button type="button" onClick={resetFlow} className="text-[10px] font-black uppercase text-slate-400 hover:text-dark transition">Change Number</button>
                   {timer > 0 ? (
                     <span className="text-[10px] font-black uppercase text-slate-400">Resend in {timer}s</span>
                   ) : (

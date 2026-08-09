@@ -27,6 +27,9 @@ public class AuthController {
     private com.jiffikart.backend.service.EmailService emailService;
 
     @Autowired
+    private com.jiffikart.backend.service.SmsService smsService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -54,7 +57,7 @@ public class AuthController {
         try {
             authService.register(request);
             return ResponseEntity
-                    .ok(new ApiResponse(true, "Registration successful. Please verify your email using the OTP sent."));
+                    .ok(new ApiResponse(true, "Registration successful. Please verify your mobile number using the OTP sent."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
@@ -83,11 +86,46 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/verify-phone-otp")
+    public ResponseEntity<?> verifyPhoneOtp(@RequestBody OtpVerificationRequest request) {
+        String result = verificationService.verifyOTP(request.getPhone(), request.getOtp(), OtpType.MOBILE);
+        if ("SUCCESS".equals(result)) {
+            return ResponseEntity.ok(new ApiResponse(true, "Account verified successfully. You can now login."));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse(false, result));
+    }
+
+    @PostMapping("/resend-phone-otp")
+    public ResponseEntity<?> resendPhoneOtp(@RequestBody OtpRequest request) {
+        try {
+            // 1. Generate & Save
+            String otp = verificationService.generateAndSaveOtp(request.getPhone(), OtpType.MOBILE);
+            
+            // Get user's name
+            String name = userRepository.findFirstByPhoneOrderByIdAsc(request.getPhone())
+                    .map(com.jiffikart.backend.entity.User::getName)
+                    .orElse("Customer");
+
+            // 2. Send
+            smsService.sendSms(request.getPhone(), name, otp);
+            
+            return ResponseEntity.ok(new ApiResponse(true, "OTP resent successfully to " + request.getPhone()));
+        } catch (Exception e) {         
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
     // ─── LOGIN FLOW (Mobile OTP) ───
 
     @PostMapping("/login/send-otp")
     public ResponseEntity<?> loginSendOtp(@RequestBody OtpRequest request) {
         try {
+            // Check if user exists and has CUSTOMER role before sending OTP
+            String phone = request.getPhone().trim();
+            var userOpt = userRepository.findFirstByPhoneOrderByIdAsc(phone);
+            if (userOpt.isPresent() && userOpt.get().getRole() != com.jiffikart.backend.entity.Role.CUSTOMER) {
+                return ResponseEntity.status(403).body(new ApiResponse(false, "Access denied. Only customer accounts can log in here."));
+            }
             authService.sendLoginOtp(request.getPhone());
             return ResponseEntity.ok(new ApiResponse(true, "OTP sent to your registered mobile number."));
         } catch (Exception e) {

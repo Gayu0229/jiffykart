@@ -46,7 +46,7 @@ public class ReturnRequest {
     @Column(nullable = false)
     private ReturnRequestStatus status;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "return_request_images", joinColumns = @JoinColumn(name = "return_request_id"))
     @Column(name = "image_url")
     private List<String> images;

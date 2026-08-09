@@ -104,7 +104,7 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({ order, o
 
       await ApiService.createReturnRequest({
         orderId: parseInt(order.id),
-        userId: 0,
+        userId: ApiService.getAuthUser()?.id || 0,
         vendorId: parseInt(order.shop_id),
         productId: parseInt(selectedProduct),
         type,

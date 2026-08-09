@@ -24,6 +24,19 @@ public class ReturnService {
     private NotificationService notificationService;
 
     public ReturnRequest createRequest(ReturnRequest req) {
+        req.setStatus(ReturnRequestStatus.PENDING);
+        req.setCreatedAt(LocalDateTime.now());
+        req.setUpdatedAt(LocalDateTime.now());
+        
+        if (req.getUserId() == null || req.getUserId() == 0) {
+            try {
+                String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+                req.setUserId(Long.parseLong(username));
+            } catch (Exception e) {
+                // Fail-safe if security context isn't populated
+            }
+        }
+
         ReturnRequest saved = returnRepository.save(req);
         
         // Notify user

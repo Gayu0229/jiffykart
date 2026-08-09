@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, ShieldCheck, ChevronRight, Loader2, Info, Mail } from 'lucide-react';
+import { ArrowLeft, CheckCircle, ShieldCheck, ChevronRight, Loader2, Info, Smartphone } from 'lucide-react';
 import { ApiService } from '../services/apiService';
 
 interface VerifyOtpPageProps {
-    email: string;
+    phone: string;
     onBack: () => void;
     onVerificationSuccess: () => void;
 }
 
-export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ email, onBack, onVerificationSuccess }) => {
+export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ phone, onBack, onVerificationSuccess }) => {
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -34,11 +34,11 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ email, onBack, onV
 
         setError('');
         setIsLoading(true);
-        console.log("🛡️ [VerifyOtp] Verifying Email OTP for:", email);
+        console.log("🛡️ [VerifyOtp] Verifying Mobile OTP for:", phone);
 
         try {
-            await ApiService.verifyEmailOtp(email, otp);
-            console.log("✅ [VerifyOtp] Email verification successful");
+            await ApiService.verifyPhoneOtp(phone, otp);
+            console.log("✅ [VerifyOtp] Mobile verification successful");
             setSuccess('Account activated successfully! Redirecting to login...');
 
             setTimeout(() => {
@@ -58,9 +58,9 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ email, onBack, onV
         setIsLoading(true);
         setError('');
         try {
-            await ApiService.resendEmailOtp(email);
+            await ApiService.resendPhoneOtp(phone);
             setOtp('');
-            setSuccess('A new code has been sent to your email.');
+            setSuccess('A new code has been sent to your mobile number.');
             setTimer(30);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err: any) {
@@ -80,10 +80,10 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ email, onBack, onV
                 {/* Header */}
                 <div className="text-center">
                     <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                        <Mail size={40} className="text-primary" />
+                        <Smartphone size={40} className="text-primary" />
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Verify Your Email</h2>
-                    <p className="text-slate-500 font-medium">We've sent a 4-digit code to <span className="text-slate-900 font-bold">{email}</span></p>
+                    <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Verify Your Mobile</h2>
+                    <p className="text-slate-500 font-medium">We've sent a 4-digit code to <span className="text-slate-900 font-bold">{phone}</span></p>
                 </div>
 
                 {/* Feedback Messages */}
@@ -141,12 +141,12 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ email, onBack, onV
                         disabled={isLoading || otp.length < 4}
                         className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-lg active:scale-[0.98]"
                     >
-                        {isLoading ? <Loader2 size={24} className="animate-spin" /> : <>Verify Email <ChevronRight size={22} /></>}
+                        {isLoading ? <Loader2 size={24} className="animate-spin" /> : <>Verify Mobile <ChevronRight size={22} /></>}
                     </button>
                 </form>
 
                 <p className="text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] pt-4">
-                    Secure Email Verification
+                    Secure Mobile Verification
                 </p>
             </div>
         </div>

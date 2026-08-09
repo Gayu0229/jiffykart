@@ -175,18 +175,18 @@ export const AppRouter: React.FC = () => {
           onLoginClick={() => navigate('login')}
           onSignupSuccess={(userData) => {
             console.log("👉 [AppRouter] Signup success callback received:", userData);
-            const email = userData?.email;
-            if (email) {
-              navigate('verify-otp', { email });
+            const phone = userData?.phone || userData?.mobile;
+            if (phone) {
+              navigate('verify-otp', { phone });
             } else {
-              console.error("❌ [AppRouter] No email found in signup success data!");
+              console.error("❌ [AppRouter] No phone found in signup success data!");
               navigate('login', { message: 'Signup successful! Please sign in.' });
             }
           }}
         />;
       case 'verify-otp':
         return <VerifyOtpPage
-          email={params.email}
+          phone={params.phone}
           onBack={() => navigate('signup')}
           onVerificationSuccess={() => navigate('login', { message: 'Account verified! Please sign in.' })}
         />;

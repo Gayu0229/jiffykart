@@ -34,6 +34,9 @@ public class AuthService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private SmsService smsService;
+
     // ─── REGISTRATION ───
 
     public User register(RegisterRequest request) {
@@ -48,15 +51,19 @@ public class AuthService {
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             System.out.println("DB EMAIL: " + user.getEmail());
-            System.out.println("EMAIL VERIFIED: " + user.getEmailVerified());
+            System.out.println("Phone VERIFIED: " + user.getPhoneVerified());
             System.out.println("Enabled: " + user.getEnabled());
             System.out.println("Role: " + user.getRole());
-            if (!user.getEmailVerified()) {
+            if (!user.getPhoneVerified()) {
                 System.out.println("➡️ Unverified user — resending OTP");
-                String otp = verificationService.generateAndSaveOtp(user.getEmail(), OtpType.EMAIL);
+                String otp = verificationService.generateAndSaveOtp(user.getPhone(), OtpType.MOBILE);
                 System.out.println("🔥 OTP GENERATED (RESEND): " + otp);
-                System.out.println("📧 Sending OTP to: " + user.getEmail());
-                emailService.sendOtpEmail(user.getEmail(), otp);
+                System.out.println("📱 Sending OTP to: " + user.getPhone());
+                try {
+                    smsService.sendSms(user.getPhone(), user.getName(), otp);
+                } catch (Exception e) {
+                    System.err.println("Failed to resend SMS: " + e.getMessage());
+                }
                 return user;
             }
             System.out.println("❌ Email already registered and verified — throwing exception");
@@ -74,22 +81,20 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.CUSTOMER)
                 .enabled(false)
-                .emailVerified(false)
-                .phoneVerified(true)
+                .emailVerified(true)
+                .phoneVerified(false)
                 .build();
 
         User savedUser = userRepository.save(newUser);
 
-        String otp = verificationService.generateAndSaveOtp(savedUser.getEmail(), OtpType.EMAIL);
+        String otp = verificationService.generateAndSaveOtp(savedUser.getPhone(), OtpType.MOBILE);
         System.out.println("🔥 OTP GENERATED: " + otp);
-        System.out.println("📧 Sending OTP to: " + savedUser.getEmail());
-        System.out.println("🚀 BEFORE EMAIL CALL");
+        System.out.println("📱 Sending OTP to: " + savedUser.getPhone());
         try {
-            emailService.sendOtpEmail(savedUser.getEmail(), otp);
+            smsService.sendSms(savedUser.getPhone(), savedUser.getName(), otp);
         } catch (Exception e) {
-            System.err.println("Failed to send OTP email: " + e.getMessage());
+            System.err.println("Failed to send OTP SMS: " + e.getMessage());
         }
-        System.out.println("🚀 AFTER EMAIL CALL");
 
         return savedUser;
     }
@@ -110,8 +115,14 @@ public class AuthService {
         // 1. Generate & Save in DB
         String otp = verificationService.generateAndSaveOtp(normalized, OtpType.MOBILE);
         
-        // 2. Send SMS (Simulated — check server console for OTP)
-        // TODO: Replace with real SMS provider (Twilio, MSG91, etc.)
+        // 2. Send SMS via SmsService
+        try {
+            smsService.sendSms(normalized, userOpt.get().getName(), otp);
+        } catch (Exception e) {
+            System.err.println("Failed to send SMS: " + e.getMessage());
+            // Keep logging the OTP to console so we don't block development/testing if API fails
+        }
+        
         System.out.println("\n╔══════════════════════════════════════╗");
         System.out.println("║  📱 MOBILE OTP for " + normalized);
         System.out.println("║  🔑 OTP: " + otp);
@@ -127,19 +138,21 @@ public class AuthService {
         if (userOpt.isEmpty()) {
             throw new RuntimeException("No account found with this email address.");
         }
-        if (!userOpt.get().getEnabled()) {
-            throw new RuntimeException("Account not verified. Please verify your email first.");
+        User user = userOpt.get();
+        if (!user.getEnabled()) {
+            throw new RuntimeException("Account not verified. Please verify your mobile number first.");
         }
 
-        // 1. Generate & Save in DB
-        String otp = verificationService.generateAndSaveOtp(normalized, OtpType.EMAIL);
+        // 1. Generate & Save in DB (using phone & OtpType.MOBILE)
+        String phone = user.getPhone();
+        String otp = verificationService.generateAndSaveOtp(phone, OtpType.MOBILE);
         
-        // 2. Send Email
+        // 2. Send SMS
         try {
-            emailService.sendOtpEmail(normalized, otp);
+            smsService.sendSms(phone, user.getName(), otp);
         } catch (Exception e) {
-            System.err.println("Failed to send login OTP email: " + e.getMessage());
-            throw new RuntimeException("Failed to send email. Please try again later.");
+            System.err.println("Failed to send login OTP SMS: " + e.getMessage());
+            throw new RuntimeException("Failed to send SMS. Please try again later.");
         }
     }
 
@@ -166,14 +179,14 @@ public class AuthService {
 
     public AuthResponse verifyEmailLoginOtp(String email, String otp) {
         String normalized = email.trim().toLowerCase();
-        String result = verificationService.verifyOTP(normalized, otp, OtpType.EMAIL);
+        User user = userRepository.findByEmailIgnoreCase(normalized)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        String result = verificationService.verifyOTP(user.getPhone(), otp, OtpType.MOBILE);
 
         if (!"SUCCESS".equals(result)) {
             throw new RuntimeException(result);
         }
-
-        User user = userRepository.findByEmailIgnoreCase(normalized)
-                .orElseThrow(() -> new RuntimeException("User not found."));
 
         return generateAuthResponse(user);
     }
@@ -207,28 +220,30 @@ public class AuthService {
             }
         }
 
-        String otp = verificationService.generateAndSaveOtp(normalized, OtpType.EMAIL);
+        // Send to phone instead of email
+        String phone = user.getPhone();
+        String otp = verificationService.generateAndSaveOtp(phone, OtpType.MOBILE);
         try {
-            emailService.sendOtpEmail(normalized, otp);
+            smsService.sendSms(phone, user.getName(), otp);
         } catch (Exception e) {
-            System.err.println("Failed to send vendor login OTP email: " + e.getMessage());
-            throw new RuntimeException("Failed to send email. Please try again later.");
+            System.err.println("Failed to send vendor login OTP SMS: " + e.getMessage());
+            throw new RuntimeException("Failed to send SMS. Please try again later.");
         }
     }
 
     public AuthResponse verifyVendorEmailLoginOtp(String email, String otp) {
         String normalized = email.trim().toLowerCase();
-        String result = verificationService.verifyOTP(normalized, otp, OtpType.EMAIL);
-
-        if (!"SUCCESS".equals(result)) {
-            throw new RuntimeException(result);
-        }
-
         User user = userRepository.findByEmailIgnoreCase(normalized)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
         if (user.getRole() != Role.VENDOR) {
             throw new RuntimeException("Access denied. Only vendor accounts allowed.");
+        }
+
+        String result = verificationService.verifyOTP(user.getPhone(), otp, OtpType.MOBILE);
+
+        if (!"SUCCESS".equals(result)) {
+            throw new RuntimeException(result);
         }
 
         return generateAuthResponse(user);

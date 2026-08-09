@@ -41,17 +41,18 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onBack, onLoginClick, on
       });
 
       console.log("✅ [Signup] Success response received:", data);
+      
       // setCreatedUser(data.user);
       // Robustly identify the user object (it might be data.user or data itself)
       const userObj = data.user || (data.id ? data : null);
-      setCreatedUser(userObj || { email: formData.email, name: formData.fullName });
+      setCreatedUser(userObj || { email: formData.email, name: formData.fullName, phone: formData.mobile });
       setShowSuccess(true);
 
       console.log("⏱️ [Signup] Redirecting in 1.5s...");
       setTimeout(async () => {
         try {
     
-          const finalUser = userObj || { email: formData.email, name: formData.fullName };
+          const finalUser = userObj || { email: formData.email, name: formData.fullName, phone: formData.mobile };
           console.log("👉 [Signup] Triggering onSignupSuccess with:", finalUser);
           await onSignupSuccess(finalUser);
           console.log("✅ [Signup] onSignupSuccess completed");

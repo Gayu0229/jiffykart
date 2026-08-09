@@ -231,6 +231,26 @@ export const ApiService = {
     }
   },
 
+  verifyPhoneOtp: async (phone: string, otp: string) => {
+    try {
+      const response = await api.post('/auth/verify-phone-otp', { phone, otp });
+      return response.data;
+    } catch (e) {
+      console.error("Phone OTP verification failed", e);
+      throw e;
+    }
+  },
+
+  resendPhoneOtp: async (phone: string) => {
+    try {
+      const response = await api.post('/auth/resend-phone-otp', { phone });
+      return response.data;
+    } catch (e) {
+      console.error("Phone OTP resend failed", e);
+      throw e;
+    }
+  },
+
   login: async (credentials: any) => {
     try {
       const response = await api.post('/auth/login', credentials);

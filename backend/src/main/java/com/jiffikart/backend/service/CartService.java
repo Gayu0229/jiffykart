@@ -27,12 +27,41 @@ public class CartService {
         User user = userRepository.findById(userId).orElseThrow();
         Product product = productRepository.findById(productId).orElseThrow();
 
-        CartItem item = CartItem.builder()
-                .user(user)
-                .product(product)
-                .quantity(quantity)
-                .build();
-        cartItemRepository.save(item);
+        java.util.Optional<CartItem> existingItem = cartItemRepository.findByUserIdAndProductId(userId, productId);
+        if (existingItem.isPresent()) {
+            CartItem item = existingItem.get();
+            item.setQuantity(item.getQuantity() + quantity);
+            cartItemRepository.save(item);
+        } else {
+            CartItem item = CartItem.builder()
+                    .user(user)
+                    .product(product)
+                    .quantity(quantity)
+                    .build();
+            cartItemRepository.save(item);
+        }
+    }
+
+    public void updateCartItem(Long userId, Long productId, int quantity) {
+        java.util.Optional<CartItem> existingItem = cartItemRepository.findByUserIdAndProductId(userId, productId);
+        if (existingItem.isPresent()) {
+            CartItem item = existingItem.get();
+            if (quantity <= 0) {
+                cartItemRepository.delete(item);
+            } else {
+                item.setQuantity(quantity);
+                cartItemRepository.save(item);
+            }
+        } else if (quantity > 0) {
+            User user = userRepository.findById(userId).orElseThrow();
+            Product product = productRepository.findById(productId).orElseThrow();
+            CartItem item = CartItem.builder()
+                    .user(user)
+                    .product(product)
+                    .quantity(quantity)
+                    .build();
+            cartItemRepository.save(item);
+        }
     }
 
     public void removeFromCart(Long itemId) {

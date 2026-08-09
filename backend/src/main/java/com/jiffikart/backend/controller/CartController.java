@@ -21,8 +21,23 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addToCart(@RequestBody CartRequest request) {
-        // userId would normally come from token, but for now using request
-        cartService.addToCart(request.getUserId(), request.getProductId(), request.getQuantity());
+        Long userId = request.getUserId();
+        if (userId == null) {
+            String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            userId = Long.parseLong(username);
+        }
+        cartService.addToCart(userId, request.getProductId(), request.getQuantity());
+        return ResponseEntity.ok().body("{\"success\":true}");
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateCart(@RequestBody CartRequest request) {
+        Long userId = request.getUserId();
+        if (userId == null) {
+            String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            userId = Long.parseLong(username);
+        }
+        cartService.updateCartItem(userId, request.getProductId(), request.getQuantity());
         return ResponseEntity.ok().body("{\"success\":true}");
     }
 

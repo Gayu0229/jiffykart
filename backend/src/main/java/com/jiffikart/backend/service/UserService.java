@@ -30,6 +30,9 @@ public class UserService {
     private JwtUtils jwtUtils;
 
     @Autowired
+    private SmsService smsService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserService.class);
@@ -168,8 +171,14 @@ public class UserService {
         // 4. Generate OTP linked to the NEW phone
         String otp = verificationService.generateAndSaveOtp(normalized, OtpType.PHONE_CHANGE);
 
-        // 5. In production: smsService.send(normalized, otp);
-        logger.info("📱 Phone change OTP for {}: {}", normalized, otp);
+        // 5. Send SMS
+        try {
+            smsService.sendSms(normalized, user.getName(), otp);
+            logger.info("SMS sent to NEW phone: {}", normalized);
+        } catch (Exception e) {
+            logger.error("Failed to send OTP to new phone {}: {}", normalized, e.getMessage());
+            throw new RuntimeException("Failed to send SMS. Please try again.");
+        }
     }
 
     // ── VERIFY CONTACT CHANGE OTP → Apply pending → Actual ──
