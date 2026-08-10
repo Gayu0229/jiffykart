@@ -8,7 +8,7 @@ interface LoginPageProps {
   onSignupClick: () => void;
   onPrivacyClick: () => void;
   onTermsClick: () => void;
-  onCancellationClick: () => void;    
+  onCancellationClick: () => void;
   message?: string;
 }
 
@@ -187,10 +187,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <div className="w-full max-w-md space-y-8 animate-slide-up py-10">
           <div className="text-center">
             <div className="mb-8 flex justify-center lg:hidden">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="w-56 h-20 object-contain" 
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-56 h-20 object-contain"
               />
             </div>
             <h2 className="text-4xl font-black text-dark mb-2 tracking-tight">Login</h2>
@@ -249,7 +249,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   {isLoading ? <Loader2 size={24} className="animate-spin" /> : <>Send OTP <ArrowRight size={22} /></>}
                 </button>
 
-               {/* <div className="text-center pt-2">
+                {/* <div className="text-center pt-2">
                   <button
                     type="button"
                     onClick={() => {

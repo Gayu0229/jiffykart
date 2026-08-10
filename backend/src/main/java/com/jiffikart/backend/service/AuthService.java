@@ -129,33 +129,6 @@ public class AuthService {
         System.out.println("╚══════════════════════════════════════╝\n");
     }
 
-    // ─── LOGIN: Send Email OTP ───
-
-    public void sendEmailLoginOtp(String email) {
-        String normalized = email.trim().toLowerCase();
-        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(normalized);
-
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("No account found with this email address.");
-        }
-        User user = userOpt.get();
-        if (!user.getEnabled()) {
-            throw new RuntimeException("Account not verified. Please verify your mobile number first.");
-        }
-
-        // 1. Generate & Save in DB (using phone & OtpType.MOBILE)
-        String phone = user.getPhone();
-        String otp = verificationService.generateAndSaveOtp(phone, OtpType.MOBILE);
-        
-        // 2. Send SMS
-        try {
-            smsService.sendSms(phone, user.getName(), otp);
-        } catch (Exception e) {
-            System.err.println("Failed to send login OTP SMS: " + e.getMessage());
-            throw new RuntimeException("Failed to send SMS. Please try again later.");
-        }
-    }
-
     // ─── LOGIN: Verify Mobile OTP & Issue JWT ───
 
     @Autowired
@@ -171,80 +144,6 @@ public class AuthService {
 
         User user = userRepository.findFirstByPhoneOrderByIdAsc(normalized)
                 .orElseThrow(() -> new RuntimeException("User not found."));
-
-        return generateAuthResponse(user);
-    }
-
-    // ─── LOGIN: Verify Email OTP & Issue JWT ───
-
-    public AuthResponse verifyEmailLoginOtp(String email, String otp) {
-        String normalized = email.trim().toLowerCase();
-        User user = userRepository.findByEmailIgnoreCase(normalized)
-                .orElseThrow(() -> new RuntimeException("User not found."));
-
-        String result = verificationService.verifyOTP(user.getPhone(), otp, OtpType.MOBILE);
-
-        if (!"SUCCESS".equals(result)) {
-            throw new RuntimeException(result);
-        }
-
-        return generateAuthResponse(user);
-    }
-
-    // ─── VENDOR: Email OTP Login ───
-
-    public void sendVendorEmailLoginOtp(String email) {
-        String normalized = email.trim().toLowerCase();
-        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(normalized);
-
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("No account found with this email address.");
-        }
-        User user = userOpt.get();
-        if (user.getRole() != Role.VENDOR) {
-            throw new RuntimeException("Access denied. Only vendor accounts allowed.");
-        }
-
-        // Shop status check (matching mobile logic)
-        var shopOpt = shopRepository.findFirstByOwnerOrderByIdAsc(user);
-        if (shopOpt.isPresent()) {
-            var shop = shopOpt.get();
-            if ("REJECTED".equalsIgnoreCase(shop.getApprovalStatus())) {
-                throw new RuntimeException("Your shop has been blocked.");
-            }
-            if (shop.getIsActive() != null && !shop.getIsActive()) {
-                throw new RuntimeException("Your shop is currently inactive.");
-            }
-            if ("PENDING".equalsIgnoreCase(shop.getApprovalStatus())) {
-                throw new RuntimeException("Your shop is pending approval.");
-            }
-        }
-
-        // Send to phone instead of email
-        String phone = user.getPhone();
-        String otp = verificationService.generateAndSaveOtp(phone, OtpType.MOBILE);
-        try {
-            smsService.sendSms(phone, user.getName(), otp);
-        } catch (Exception e) {
-            System.err.println("Failed to send vendor login OTP SMS: " + e.getMessage());
-            throw new RuntimeException("Failed to send SMS. Please try again later.");
-        }
-    }
-
-    public AuthResponse verifyVendorEmailLoginOtp(String email, String otp) {
-        String normalized = email.trim().toLowerCase();
-        User user = userRepository.findByEmailIgnoreCase(normalized)
-                .orElseThrow(() -> new RuntimeException("User not found."));
-
-        if (user.getRole() != Role.VENDOR) {
-            throw new RuntimeException("Access denied. Only vendor accounts allowed.");
-        }
-
-        String result = verificationService.verifyOTP(user.getPhone(), otp, OtpType.MOBILE);
-
-        if (!"SUCCESS".equals(result)) {
-            throw new RuntimeException(result);
-        }
 
         return generateAuthResponse(user);
     }

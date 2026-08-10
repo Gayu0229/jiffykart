@@ -63,28 +63,6 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/verify-email-otp")
-    public ResponseEntity<?> verifyEmailOtp(@RequestBody VerificationRequest request) {
-        String result = verificationService.verifyOTP(request.getEmail(), request.getOtp(), OtpType.EMAIL);
-        if ("SUCCESS".equals(result)) {
-            return ResponseEntity.ok(new ApiResponse(true, "Account verified successfully. You can now login."));
-        }
-        return ResponseEntity.badRequest().body(new ApiResponse(false, result));
-    }
-
-    @PostMapping("/resend-email-otp")
-    public ResponseEntity<?> resendEmailOtp(@RequestBody EmailRequest request) {
-        try {
-            // 1. Generate & Save
-            String otp = verificationService.generateAndSaveOtp(request.getEmail(), OtpType.EMAIL);
-            // 2. Send
-            emailService.sendOtpEmail(request.getEmail(), otp);
-            
-            return ResponseEntity.ok(new ApiResponse(true, "OTP resent successfully to " + request.getEmail()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
 
     @PostMapping("/verify-phone-otp")
     public ResponseEntity<?> verifyPhoneOtp(@RequestBody OtpVerificationRequest request) {
@@ -169,50 +147,10 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/vendor/email/send-otp")
-    public ResponseEntity<?> vendorSendEmailOtp(@RequestBody EmailRequest request) {
-        try {
-            authService.sendVendorEmailLoginOtp(request.getEmail());
-            return ResponseEntity.ok(new ApiResponse(true, "OTP sent to your registered email address."));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
-
-    @PostMapping("/vendor/email/verify-otp")
-    public ResponseEntity<?> vendorVerifyEmailOtp(@RequestBody VerificationRequest request) {
-        try {
-            AuthResponse response = authService.verifyVendorEmailLoginOtp(request.getEmail(), request.getOtp());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
-
-    @PostMapping("/login/email/send-otp")
-    public ResponseEntity<?> loginSendEmailOtp(@RequestBody EmailRequest request) {
-        try {
-            authService.sendEmailLoginOtp(request.getEmail());
-            return ResponseEntity.ok(new ApiResponse(true, "OTP sent to your registered email address."));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
-
     @PostMapping("/login/verify-otp")
     public ResponseEntity<?> loginVerifyOtp(@RequestBody OtpVerificationRequest request) {
         try {
             AuthResponse response = authService.verifyLoginOtp(request.getPhone(), request.getOtp());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
-
-    @PostMapping("/login/email/verify-otp")
-    public ResponseEntity<?> loginVerifyEmailOtp(@RequestBody VerificationRequest request) {
-        try {
-            AuthResponse response = authService.verifyEmailLoginOtp(request.getEmail(), request.getOtp());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));

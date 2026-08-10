@@ -45,10 +45,10 @@ public class EmailService{
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("${jiffikart.client-url:http://localhost:3002}")
+    @Value("${jiffikart.client-url:https://jiffykart.in}")
     private String clientUrl;
 
-    @Value("${jiffikart.vendor-url:http://localhost:3001}")
+    @Value("${jiffikart.vendor-url:https://vendor.jiffykart.in}")
     private String vendorUrl;
 
     @Autowired
