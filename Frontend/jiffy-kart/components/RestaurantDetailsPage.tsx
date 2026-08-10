@@ -586,7 +586,7 @@ export const RestaurantDetailsPage: React.FC<{ restaurantId: string; onBack: () 
     <div className="min-h-screen bg-background">
 
       {/* ── Sticky Action Bar ── */}
-      <div className={`fixed top-[56px] md:top-[64px] left-0 right-0 z-50 transition-all duration-300 ${stickyVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${stickyVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
         <div className="bg-white border-b border-gray-100 shadow-soft px-4 py-3 flex items-center gap-3">
           <button onClick={onBack} className="w-8 h-8 min-h-0 min-w-0 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition shrink-0">
             <ChevronLeft size={16} className="text-gray-600" />

@@ -624,7 +624,7 @@ export const DineOutPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <div className="min-h-screen bg-background">
 
       {/* ── Sticky Search Bar (appears after hero scrolls away) ── */}
-      <div className={`fixed top-[56px] md:top-[64px] left-0 right-0 z-40 transition-all duration-300 ${stickySearch ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${stickySearch ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
         <div className="bg-white border-b border-gray-100 shadow-soft px-4 py-3">
           <div className="max-w-3xl mx-auto flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200">
             <Search size={16} className="text-gray-400 shrink-0" />
@@ -746,7 +746,7 @@ export const DineOutPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* ════════════════════════════════════════
           FILTER CHIPS
       ════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-4 -mt-2 mb-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 -mt-2 mb-6">
         <div className="flex items-center gap-3">
           <button className="shrink-0 flex items-center gap-1.5 bg-white border border-gray-200 text-gray-600 font-bold text-xs px-3 py-2 rounded-xl shadow-sm hover:border-primary hover:text-primary transition min-h-0 min-w-0">
             <SlidersHorizontal size={13} /> Filters

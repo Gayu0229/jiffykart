@@ -407,7 +407,7 @@ export const DineOutSuccessPage: React.FC<{
       {showConfetti && <Confetti />}
 
       {/* ── Top Bar ── */}
-      <div className="sticky top-[56px] md:top-[64px] z-40 bg-white/90 backdrop-blur border-b border-gray-100">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate('dineout')} className="w-9 h-9 min-h-0 min-w-0 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition shrink-0">
             <X size={16} className="text-gray-600" />
