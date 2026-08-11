@@ -1,5 +1,4 @@
 package com.jiffikart.backend.service;
-
 import com.jiffikart.backend.entity.EmailLog;
 import com.jiffikart.backend.entity.Invoice;
 import com.jiffikart.backend.entity.Order;
@@ -45,10 +44,10 @@ public class EmailService{
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("${jiffikart.client-url:https://jiffykart.in}")
+    @Value("${jiffikart.client-url}")
     private String clientUrl;
 
-    @Value("${jiffikart.vendor-url:https://vendor.jiffykart.in}")
+    @Value("${jiffikart.vendor-url}")
     private String vendorUrl;
 
     @Autowired
