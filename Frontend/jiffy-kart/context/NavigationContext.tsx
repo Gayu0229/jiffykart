@@ -69,21 +69,26 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
   const [history, setHistory] = useState<NavigationState[]>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      if (path === '/payment-status') {
-        const queryParams = new URLSearchParams(window.location.search);
-        const initialState: NavigationState = { view: 'payment-status', params: Object.fromEntries(queryParams.entries()) };
-        // Set the initial browser state
-        window.history.replaceState({ view: 'payment-status', params: initialState.params, depth: 0 }, '', '/payment-status');
+      const viewName = path.startsWith('/') ? path.substring(1) : path;
+      
+      const validViews: string[] = [
+        'shops', 'details', 'product-detail', 'cart', 'profile', 'tracking', 
+        'checkout', 'jiffy-street', 'jiffy-cafe', 'login', 'signup', 'verify-otp', 
+        'seller', 'seller-registration', 'privacy-policy', 'terms-and-conditions', 
+        'cancellation-refund', 'collections', 'admin-banners', 'wishlist', 'wallet', 
+        'track-orders', 'comparison', 'payment-status', 'subscription', 'table-booking', 
+        'live-tracking', 'waitlist', 'dineout', 'dineout-restaurant', 'dineout-booking', 
+        'dineout-preorder', 'dineout-review', 'dineout-success', 'dineout-waitlist', 
+        'dineout-prebooking', 'dineout-dashboard'
+      ];
+      
+      const queryParams = new URLSearchParams(window.location.search);
+      const params = Object.fromEntries(queryParams.entries());
+
+      if (validViews.includes(viewName)) {
+        const initialState: NavigationState = { view: viewName as ViewType, params };
+        window.history.replaceState({ view: viewName, params, depth: 0 }, '', window.location.pathname + window.location.search);
         return [initialState];
-      }
-      if (path === '/tracking') {
-        const queryParams = new URLSearchParams(window.location.search);
-        const orderId = queryParams.get('orderId');
-        if (orderId) {
-          const initialState: NavigationState = { view: 'tracking', params: { orderId } };
-          window.history.replaceState({ view: 'tracking', params: { orderId }, depth: 0 }, '', `/tracking?orderId=${orderId}`);
-          return [initialState];
-        }
       }
     }
     // Default: home

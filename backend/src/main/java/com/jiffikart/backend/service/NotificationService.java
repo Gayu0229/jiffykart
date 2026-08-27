@@ -157,6 +157,33 @@ public class NotificationService {
         notificationRepository.saveAll(unread);
     }
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @org.springframework.scheduling.annotation.Async
+    public void notifyFollowersOfOffer(Long shopId, String shopName, String productName, Double price, Double mrp) {
+        List<Long> followerIds = jdbcTemplate.queryForList(
+            "SELECT user_id FROM shop_followers WHERE shop_id = ?",
+            Long.class,
+            shopId
+        );
+
+        if (followerIds == null || followerIds.isEmpty()) return;
+
+        String title = "New Offer from " + shopName + "!";
+        String message = productName + " is now available at ₹" + price + " (MRP: ₹" + mrp + "). Save big!";
+        String type = "SHOP_OFFER";
+        String metadata = "{\"shopId\":" + shopId + "}";
+
+        for (Long userId : followerIds) {
+            try {
+                sendNotification(userId, title, message, type, metadata);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+    }
+
     private NotificationDTO convertToDTO(Notification n) {
         return NotificationDTO.builder()
                 .id(n.getId())

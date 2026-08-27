@@ -3,7 +3,8 @@ import React from 'react';
 import {
   Cpu, Shirt, Home, Sparkles, HeartPulse, Dumbbell,
   BookOpen, Gamepad2, Car, PenLine, PawPrint, Utensils,
-  ShoppingBasket, Sofa
+  ShoppingBasket, Sofa,
+  Watch
 } from 'lucide-react';
 
 export const CATEGORIES: (Category & { iconComponent: React.ReactNode })[] = [
@@ -21,4 +22,9 @@ export const CATEGORIES: (Category & { iconComponent: React.ReactNode })[] = [
   { id: 'cat_food',         name: 'Food',           icon: 'food',         iconComponent: <Utensils size={24} /> },
   { id: 'cat_groceries',    name: 'Groceries',      icon: 'groceries',    iconComponent: <ShoppingBasket size={24} /> },
   { id: 'cat_furniture',    name: 'Furniture',      icon: 'furniture',    iconComponent: <Sofa size={24} /> },
+  { id: 'cat_men_fashion',  name: 'Men Fashion',    icon: 'fashion',      iconComponent: <Shirt size={24} /> },
+  { id: 'cat_women_fashion',name: 'Women Fashion',  icon: 'fashion',      iconComponent: <Shirt size={24} /> },
+  { id: 'cat_accessories',  name: 'Accessories',    icon: 'accessories',  iconComponent: <Watch size={24} /> },
+  { id: 'cat_jewellery',    name: 'Jewellery',      icon: 'jewellery',    iconComponent: <Sparkles size={24} /> },
+  { id: 'cat_bangles',      name: 'Bangles',        icon: 'bangles',      iconComponent: <Sparkles size={24} /> },
 ];

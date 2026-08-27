@@ -216,4 +216,77 @@ public class ShopController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
         }
     }
+
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @PostMapping("/customer/shops/{shopId}/follow")
+    public ResponseEntity<?> followShop(@PathVariable Long shopId, Authentication authentication) {
+        try {
+            User user = getAuthenticatedUser(authentication);
+            jdbcTemplate.update(
+                "INSERT INTO shop_followers (shop_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                shopId, user.getId()
+            );
+            return ResponseEntity.ok(Map.of("success", true, "message", "Followed shop successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/customer/shops/{shopId}/unfollow")
+    public ResponseEntity<?> unfollowShop(@PathVariable Long shopId, Authentication authentication) {
+        try {
+            User user = getAuthenticatedUser(authentication);
+            jdbcTemplate.update(
+                "DELETE FROM shop_followers WHERE shop_id = ? AND user_id = ?",
+                shopId, user.getId()
+            );
+            return ResponseEntity.ok(Map.of("success", true, "message", "Unfollowed shop successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/shops/{shopId}/follow-details")
+    public ResponseEntity<?> getFollowDetails(@PathVariable Long shopId, Authentication authentication) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM shop_followers WHERE shop_id = ?",
+                Integer.class,
+                shopId
+            );
+            if (count == null) count = 0;
+
+            Integer productCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM products WHERE shop_id = ? AND status = 'PUBLISHED' AND is_active = true",
+                Integer.class,
+                shopId
+            );
+            if (productCount == null) productCount = 0;
+
+            boolean isFollowing = false;
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                try {
+                    User user = getAuthenticatedUser(authentication);
+                    Integer userCount = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM shop_followers WHERE shop_id = ? AND user_id = ?",
+                        Integer.class,
+                        shopId, user.getId()
+                    );
+                    isFollowing = (userCount != null && userCount > 0);
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "followerCount", count,
+                "isFollowing", isFollowing,
+                "productCount", productCount
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

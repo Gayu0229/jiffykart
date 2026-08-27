@@ -112,6 +112,25 @@ const CATEGORY_SUB_MAP: Record<string, string[]> = {
   ],
   'Furniture': [
     'Beds', 'Sofas', 'Tables', 'Chairs', 'Storage & Organization', 'Office Furniture'
+  ],
+  'Men Fashion': [],
+  'Women Fashion': [],
+  'Accessories': [
+    'Handbags', 'Wallets', 'Belts', 'Sunglasses', 'Watches',
+    'Hair Accessories', 'kids hair accessories', 'Scarves & Stoles',
+    'Caps & Hats', 'Brooches & Pins', 'Makeup Pouches',
+    'Travel Accessories', 'Fashion Accessories'
+  ],
+  'Jewellery': [
+    'Fashion Necklaces', 'Chains', 'Pendant Necklaces', 'Chokers',
+    'Layered Necklaces', 'Traditional Necklaces', 'Mangalsutra',
+    'Necklace Sets', 'Bangles', 'Studs', 'Jhumkas', 'Hoops',
+    'Drops', 'Dangles', 'Chandbali', 'Huggies', 'Ear Cuffs',
+    'Traditional', 'Fashion', 'Oxidised', 'Gold', 'Silver',
+    'Bridal', 'Earring Sets'
+  ],
+  'Bangles': [
+    'Stones', 'Oxidised', 'Bridal', 'Glass Bangles', 'Side Bangles', 'Kada'
   ]
 };
 
@@ -491,10 +510,14 @@ const Products: React.FC = () => {
           alert('Product Name is required.');
           return;
         }
-        if (!p.category && vendorCategory) {
-          p.category = vendorCategory;
+        let finalCategory = p.category;
+        if (finalCategory === 'CUSTOM') {
+          finalCategory = (p as any).customCategory || '';
         }
-        if (!p.category) {
+        if (!finalCategory && vendorCategory) {
+          finalCategory = vendorCategory;
+        }
+        if (!finalCategory || finalCategory.trim() === '') {
           alert(`Category is required for product: ${p.name || 'Untitled'}`);
           return;
         }
@@ -524,8 +547,11 @@ const Products: React.FC = () => {
         formData.append('name', p.name || '');
         formData.append('price', p.price || '0');
         if (p.mrp) formData.append('mrp', p.mrp);
-        if (p.description) formData.append('description', p.description);
-        formData.append('category', p.category || vendorCategory || '');
+        let finalCategory = p.category;
+        if (finalCategory === 'CUSTOM') {
+          finalCategory = (p as any).customCategory || '';
+        }
+        formData.append('category', finalCategory || vendorCategory || '');
         formData.append('subCategory', p.subCategory || '');
         const isFood = p.category === 'Food' || vendorCategory === 'Food';
         const totalStock = isFood ? 9999 : (p.has_variations
@@ -871,16 +897,35 @@ const Products: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Category *</label>
-                      <select 
-                        value={product.category || vendorCategory || ''} 
-                        onChange={(e) => handleInputChange(index, 'category', e.target.value)}
-                        className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all appearance-none"
-                      >
-                        <option value="">Select Category</option>
-                        {Object.keys(CATEGORY_SUB_MAP).map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      {product.category === 'CUSTOM' ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Enter Custom Category"
+                            onChange={(e) => handleInputChange(index, 'customCategory', e.target.value)}
+                            className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleInputChange(index, 'category', '')}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold hover:bg-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <select 
+                          value={product.category || vendorCategory || ''} 
+                          onChange={(e) => handleInputChange(index, 'category', e.target.value)}
+                          className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all appearance-none"
+                        >
+                          <option value="">Select Category</option>
+                          {Object.keys(CATEGORY_SUB_MAP).map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                          <option value="CUSTOM">+ Add New Category</option>
+                        </select>
+                      )}
                     </div>
                     <InputField 
                       label="Sub-category *" 

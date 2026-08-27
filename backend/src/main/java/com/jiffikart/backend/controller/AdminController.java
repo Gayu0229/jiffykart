@@ -359,6 +359,17 @@ public class AdminController {
         product.setStatus(ProductStatus.PUBLISHED);
         productRepository.save(product);
         notificationService.notifyProductUpdate(id, "Your product '" + product.getName() + "' has been approved!");
+        
+        if (product.getShop() != null && product.getMrp() != null && product.getPrice() != null && product.getPrice() < product.getMrp()) {
+            notificationService.notifyFollowersOfOffer(
+                product.getShop().getId(),
+                product.getShop().getName(),
+                product.getName(),
+                product.getPrice(),
+                product.getMrp()
+            );
+        }
+        
         return ResponseEntity.ok(Map.of("message", "Product approved successfully"));
     }
 

@@ -3,16 +3,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Zap, Search, Plus, Trash2, CheckCircle,
   AlertTriangle, Filter, Package, ExternalLink,
-  ArrowRight, ShieldCheck, Store, Loader2, Clock
+  ArrowRight, ShieldCheck, Store, Loader2, Clock, Edit
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Product } from '../../types';
 
 interface JiffyStreetManagerProps {
   onAddProduct?: () => void;
+  onEditProduct?: (product: Product) => void;
 }
 
-const JiffyStreetManager: React.FC<JiffyStreetManagerProps> = ({ onAddProduct }) => {
+const JiffyStreetManager: React.FC<JiffyStreetManagerProps> = ({ onAddProduct, onEditProduct }) => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -263,21 +264,31 @@ const JiffyStreetManager: React.FC<JiffyStreetManagerProps> = ({ onAddProduct })
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {product.isJiffyStreet ? (
-                          <button
-                            onClick={() => handleToggleStreet(product, false)}
-                            className="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all text-xs font-bold border border-red-100 active:scale-95"
-                          >
-                            <Trash2 size={14} className="mr-2" /> Remove from Street
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStreet(product, true)}
-                            className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-800 rounded-xl hover:bg-indigo-700 hover:text-white transition-all text-xs font-bold border border-indigo-100 shadow-sm active:scale-95"
-                          >
-                            <Plus size={14} className="mr-2" /> Promote to Street
-                          </button>
-                        )}
+                        <div className="flex justify-end gap-2">
+                          {onEditProduct && (
+                            <button
+                              onClick={() => onEditProduct(product)}
+                              className="inline-flex items-center px-4 py-2 bg-slate-50 text-slate-700 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold border border-slate-200 active:scale-95"
+                            >
+                              <Edit size={14} className="mr-1.5" /> Edit
+                            </button>
+                          )}
+                          {product.isJiffyStreet ? (
+                            <button
+                              onClick={() => handleToggleStreet(product, false)}
+                              className="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all text-xs font-bold border border-red-100 active:scale-95"
+                            >
+                              <Trash2 size={14} className="mr-2" /> Remove from Street
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleStreet(product, true)}
+                              className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-800 rounded-xl hover:bg-indigo-700 hover:text-white transition-all text-xs font-bold border border-indigo-100 shadow-sm active:scale-95"
+                            >
+                              <Plus size={14} className="mr-2" /> Promote to Street
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

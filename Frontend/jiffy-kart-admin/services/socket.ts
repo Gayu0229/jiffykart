@@ -4,20 +4,12 @@ import { Client } from '@stomp/stompjs';
 
 export const createSocketClient = (onMessageReceived: (topic: string, body: any) => void) => {
     let wsUrl = (import.meta as any).env?.VITE_WS_URL || 'http://localhost:8080/ws';
-    
-    // Rewrite protocol to secure if page is HTTPS
-    // if (window.location.protocol === 'https:') {
-    //     wsUrl = wsUrl.replace(/^http:/i, 'https:');
-    // }
-    
-    // const socket = new SockJS(wsUrl, null, {
-    //     insecureAllowed: true
-    // });
-        const socketUrl = wsUrl.replace(/^http/i, 'ws');
+
+    const socketUrl = wsUrl.replace(/^http/i, 'ws');
 
     const client = new Client({
         brokerURL: socketUrl,
-         onConnect: () => {
+        onConnect: () => {
             console.log('Connected to WebSocket (Admin)');
 
             // Shared notifications

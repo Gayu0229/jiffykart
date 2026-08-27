@@ -52,6 +52,39 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [followDetails, setFollowDetails] = useState<{ followerCount: number, isFollowing: boolean, productCount: number } | null>(null);
+
+  const fetchFollowDetails = useCallback(async () => {
+    try {
+      const details = await ApiService.getShopFollowDetails(shop.id);
+      setFollowDetails(details);
+    } catch (e) {
+      console.error('[ShopDetails] Failed to load follow details:', e);
+    }
+  }, [shop.id]);
+
+  const handleFollowToggle = async () => {
+    if (!isLoggedIn) {
+      navigate('login', {
+        redirect: 'details',
+        redirectParams: { shopId: shop.id },
+        message: "Please sign in to follow stores."
+      });
+      return;
+    }
+    try {
+      if (followDetails?.isFollowing) {
+        await ApiService.unfollowShop(shop.id);
+        setToastMessage(`Unfollowed ${shop.name}!`);
+      } else {
+        await ApiService.followShop(shop.id);
+        setToastMessage(`Following ${shop.name}! ✨`);
+      }
+      fetchFollowDetails();
+    } catch (e) {
+      console.error('Failed to toggle follow:', e);
+    }
+  };
   const [isShopImageZoomed, setIsShopImageZoomed] = useState(false);
 
   // ── Fetch products independently ──
@@ -93,7 +126,8 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
   useEffect(() => {
     fetchProducts();
     fetchReviews();
-  }, [fetchProducts, fetchReviews]);
+    fetchFollowDetails();
+  }, [fetchProducts, fetchReviews, fetchFollowDetails]);
 
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(products.map(p => p.category)))], [products]);
@@ -234,7 +268,7 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
                 ))}
               </div>
               <h1 className="text-3xl md:text-6xl font-black text-slate-900 mb-3 tracking-tighter drop-shadow-sm line-clamp-2 md:line-clamp-none whitespace-normal">{shop.name}</h1>
-              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-600 font-bold text-sm">
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-600 font-bold text-sm mb-4">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-xl shadow-sm border border-slate-100">
                   <Star size={16} fill="currentColor" className="text-amber-400" />
                   <span className="text-slate-900">{avgRating || 'New'}</span>
@@ -248,6 +282,34 @@ export const ShopDetails: React.FC<ShopDetailsProps> = ({ shop, onBack, onAddToC
                   <MapPin size={16} className="text-rose-500 shrink-0" />
                   <span className="text-slate-900 truncate">{shop.location}</span>
                 </div>
+              </div>
+
+              {/* Instagram-style Follow and Stats section */}
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-5 mt-4 text-sm font-bold text-slate-500 bg-white/50 backdrop-blur-sm p-4 rounded-[2rem] border border-white/20 shadow-sm max-w-xl">
+                <div className="text-center md:text-left">
+                  <span className="block text-slate-900 text-base font-black">{avgRating || '4.0'} ★</span>
+                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider">{totalReviews} Ratings</span>
+                </div>
+                <div className="w-px h-6 bg-slate-200 hidden sm:block"></div>
+                <div className="text-center md:text-left">
+                  <span className="block text-slate-900 text-base font-black">{followDetails?.followerCount || '0'}</span>
+                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Followers</span>
+                </div>
+                <div className="w-px h-6 bg-slate-200 hidden sm:block"></div>
+                <div className="text-center md:text-left">
+                  <span className="block text-slate-900 text-base font-black">{followDetails?.productCount || '0'}</span>
+                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Products</span>
+                </div>
+                <button
+                  onClick={handleFollowToggle}
+                  className={`ml-auto px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition ${
+                    followDetails?.isFollowing 
+                      ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
+                      : 'bg-primary text-white hover:bg-indigo-600 shadow-md shadow-primary/10'
+                  }`}
+                >
+                  {followDetails?.isFollowing ? 'Following' : 'Follow'}
+                </button>
               </div>
             </div>
 

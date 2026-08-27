@@ -67,8 +67,12 @@ const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 
 const resolveImg = (url: string | null | undefined): string => {
   if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return BACKEND_URL + (url.startsWith('/') ? url : '/' + url);
+  let finalUrl = url;
+  if (finalUrl.includes('localhost:8080/uploads/')) {
+    finalUrl = finalUrl.replace('http://localhost:8080', BACKEND_URL);
+  }
+  if (finalUrl.startsWith('http')) return finalUrl;
+  return BACKEND_URL + (finalUrl.startsWith('/') ? finalUrl : '/' + finalUrl);
 };
 
 const mapBackendProductToFrontend = (p: any): Product => {
@@ -1059,5 +1063,21 @@ export const ApiService = {
       console.error("Failed to fetch return requests", e);
       return [];
     }
+  },
+
+  // ─── SHOP FOLLOW SYSTEM ───
+  followShop: async (shopId: string) => {
+    const response = await api.post(`/customer/shops/${shopId}/follow`);
+    return response.data;
+  },
+
+  unfollowShop: async (shopId: string) => {
+    const response = await api.post(`/customer/shops/${shopId}/unfollow`);
+    return response.data;
+  },
+
+  getShopFollowDetails: async (shopId: string) => {
+    const response = await api.get(`/shops/${shopId}/follow-details`);
+    return response.data;
   }
 };

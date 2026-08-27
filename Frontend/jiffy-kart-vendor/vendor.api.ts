@@ -136,12 +136,37 @@ class VendorAPI {
   /* =========================
      PRODUCT CATALOG (REAL BACKEND)
      ========================= */
+  private mapProduct(p: any): any {
+    if (!p) return p;
+    const backendRoot = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/api$/, '');
+    let imageSrc = p.image || '';
+    if (imageSrc.includes('localhost:8080/uploads/')) {
+      imageSrc = imageSrc.replace('http://localhost:8080', backendRoot);
+    }
+    p.image = imageSrc ? (imageSrc.startsWith('http') ? imageSrc : `${backendRoot}${imageSrc}`) : '';
+
+    if (p.images && Array.isArray(p.images)) {
+      p.images = p.images.map((img: string) => {
+        if (!img) return '';
+        if (img.includes('localhost:8080/uploads/')) {
+          return img.replace('http://localhost:8080', backendRoot);
+        }
+        return img.startsWith('http') ? img : `${backendRoot}${img}`;
+      });
+    } else {
+      p.images = [p.image];
+    }
+    return p;
+  }
+
   async fetchProducts(): Promise<any[]> {
-    return this.request('GET', '/vendor/products');
+    const list = await this.request<any[]>('GET', '/vendor/products');
+    return (list || []).map(p => this.mapProduct(p));
   }
 
   async fetchProductsByStatus(status: string): Promise<any[]> {
-    return this.request('GET', `/vendor/products?status=${status}`);
+    const list = await this.request<any[]>('GET', `/vendor/products?status=${status}`);
+    return (list || []).map(p => this.mapProduct(p));
   }
 
   async createProduct(productData: any) {
@@ -154,7 +179,8 @@ class VendorAPI {
       });
       productData = formData;
     }
-    return this.request('POST', '/vendor/products', productData);
+    const res = await this.request('POST', '/vendor/products', productData);
+    return this.mapProduct(res);
   }
 
   async updateProduct(id: string | number, productData: any) {
@@ -167,7 +193,8 @@ class VendorAPI {
       });
       productData = formData;
     }
-    return this.request('PUT', `/vendor/products/${id}`, productData);
+    const res = await this.request('PUT', `/vendor/products/${id}`, productData);
+    return this.mapProduct(res);
   }
 
   async deleteProduct(id: string | number) {
@@ -175,11 +202,13 @@ class VendorAPI {
   }
 
   async publishProduct(id: string | number) {
-    return this.request('PUT', `/vendor/products/${id}/publish`);
+    const res = await this.request('PUT', `/vendor/products/${id}/publish`);
+    return this.mapProduct(res);
   }
 
   async unpublishProduct(id: string | number) {
-    return this.request('PUT', `/vendor/products/${id}/unpublish`);
+    const res = await this.request('PUT', `/vendor/products/${id}/unpublish`);
+    return this.mapProduct(res);
   }
 
   async createProducts(products: any[]) {

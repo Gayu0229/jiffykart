@@ -43,12 +43,9 @@ public class EmailService{
 
     @Value("${spring.mail.username}")
     private String fromEmail;
-
-    @Value("${jiffikart.client-url}")
-    private String clientUrl;
-
-    @Value("${jiffikart.vendor-url}")
-    private String vendorUrl;
+    
+    private final String clientUrl = "https://jiffykart.in";
+    private final String vendorUrl = "https://vendor.jiffykart.in";
 
     @Autowired
     private OrderRepository orderRepository;

@@ -437,7 +437,14 @@ class JiffyAPI {
       ...p,
       id: String(p.id),
       sku: p.sku || `JK-${p.id}`,
-      imageUrl: p.image ? (p.image.startsWith('http') ? p.image : `https://api.jiffykart.in${p.image}`) : '',
+      imageUrl: (() => {
+        let imageSrc = p.image || '';
+        const backendRoot = API_BASE.replace(/\/api$/, '');
+        if (imageSrc.includes('localhost:8080/uploads/')) {
+          imageSrc = imageSrc.replace('http://localhost:8080', backendRoot);
+        }
+        return imageSrc ? (imageSrc.startsWith('http') ? imageSrc : `${backendRoot}${imageSrc}`) : '';
+      })(),
       stock: p.stockQuantity || 0,
       isJiffyStreet: p.showOnJiffyStreet || false,
       isJiffyCafe: p.showOnJiffyCafe || false,

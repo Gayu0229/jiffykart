@@ -30,6 +30,7 @@ export const ProductDetailPage: React.FC = () => {
    const [activeMedia, setActiveMedia] = useState<{ type: 'image' | 'video', url: string } | null>(null);
    const [quantity, setQuantity] = useState(1);
    const [toast, setToast] = useState<string | null>(null);
+   const [followDetails, setFollowDetails] = useState<{ followerCount: number, isFollowing: boolean, productCount: number } | null>(null);
 
    // ── Separate loading states per section ──
    const [productLoading, setProductLoading] = useState(true);
@@ -110,18 +111,54 @@ export const ProductDetailPage: React.FC = () => {
       }
    };
 
-   useEffect(() => {
-      if (!params.productId) return;
+    const fetchFollowDetails = async (shopId: string) => {
+       try {
+          const details = await ApiService.getShopFollowDetails(shopId);
+          setFollowDetails(details);
+       } catch (e) {
+          console.error('[ProductDetailPage] Failed to load follow details:', e);
+       }
+    };
 
-      // Step 1: Fetch the product first (critical — needed for shop_id)
-      fetchProduct(params.productId).then(data => {
-         if (!data) return;
-         // Step 2: Fetch shop, reviews, summary independently in parallel
-         const shopPromise = data.shop_id ? fetchShop(data.shop_id) : Promise.resolve();
-         fetchReviews(params.productId);
-         fetchReviewSummary(params.productId);
-      });
-   }, [params.productId, areaId]);
+    const handleFollowToggle = async () => {
+       if (!product?.shop_id) return;
+       if (!isLoggedIn) {
+          navigate('login', {
+             redirect: 'product-detail',
+             redirectParams: { productId: product.id },
+             message: "Please sign in to follow stores."
+          });
+          return;
+       }
+       try {
+          if (followDetails?.isFollowing) {
+             await ApiService.unfollowShop(product.shop_id);
+             setToast(`Unfollowed ${product.shopName || 'store'}!`);
+          } else {
+             await ApiService.followShop(product.shop_id);
+             setToast(`Following ${product.shopName || 'store'}! ✨`);
+          }
+          await fetchFollowDetails(product.shop_id);
+       } catch (e) {
+          console.error('Failed to toggle follow:', e);
+       }
+    };
+
+    useEffect(() => {
+       if (!params.productId) return;
+
+       // Step 1: Fetch the product first (critical — needed for shop_id)
+       fetchProduct(params.productId).then(data => {
+          if (!data) return;
+          // Step 2: Fetch shop, reviews, summary independently in parallel
+          const shopPromise = data.shop_id ? fetchShop(data.shop_id) : Promise.resolve();
+          if (data.shop_id) {
+             fetchFollowDetails(data.shop_id);
+          }
+          fetchReviews(params.productId);
+          fetchReviewSummary(params.productId);
+       });
+    }, [params.productId, areaId]);
 
 
    const handleAddToCart = () => {
@@ -300,7 +337,7 @@ export const ProductDetailPage: React.FC = () => {
                      </div>
 
                      {/* Additional Specs */}
-                     <div className="grid grid-cols-2 gap-3 md:gap-4 mb-10 md:mb-12">
+                     <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
                         <div className="p-3 md:p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-2 md:gap-3">
                            <div className="w-9 h-9 md:w-10 md:h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm shrink-0">
                               <ShieldCheck size={18} />
@@ -317,6 +354,61 @@ export const ProductDetailPage: React.FC = () => {
                            <div>
                               <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Delivery</p>
                               <p className="text-[10px] md:text-xs font-black text-slate-900">Under 30 Mins</p>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Seller Information */}
+                     <div className="mb-10 md:mb-12">
+                        <h3 className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Sold By</h3>
+                        <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-primary shadow-sm border border-slate-100 shrink-0 overflow-hidden">
+                                 {shop?.logo ? (
+                                    <img src={shop.logo} alt={product.shopName || 'Store'} className="w-full h-full object-cover" />
+                                 ) : (
+                                    <Store size={24} />
+                                 )}
+                              </div>
+                              <div>
+                                 <h4 className="font-black text-slate-900 text-lg leading-tight uppercase tracking-wide">
+                                    {product.showOnJiffyStreet ? 'JiffyStreet' : (product.shopName || 'Official JiffyKart Seller')}
+                                 </h4>
+                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                                    <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[10px] font-black">
+                                       {shop?.rating || '4.0'} <Star size={10} fill="currentColor" />
+                                    </div>
+                                    <span>{shop?.ratingCount || '0'} Ratings</span>
+                                    <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                                    <span>{followDetails?.followerCount || '0'} Followers</span>
+                                    <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                                    <span>{followDetails?.productCount || '0'} Products</span>
+                                 </div>
+                              </div>
+                           </div>
+                           <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <button
+                                 onClick={handleFollowToggle}
+                                 className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${
+                                    followDetails?.isFollowing 
+                                       ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
+                                       : 'bg-primary text-white hover:bg-indigo-600 shadow-md shadow-primary/15'
+                                 }`}
+                              >
+                                 {followDetails?.isFollowing ? 'Following' : 'Follow'}
+                              </button>
+                              <button
+                                 onClick={() => {
+                                    if (product.showOnJiffyStreet) {
+                                       navigate('jiffy-street');
+                                    } else if (product.shop_id) {
+                                       navigate('details', { shopId: product.shop_id });
+                                    }
+                                 }}
+                                 className="flex-1 sm:flex-none border border-primary text-primary px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-rose-50/50 transition text-center"
+                              >
+                                 View Shop
+                              </button>
                            </div>
                         </div>
                      </div>

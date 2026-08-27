@@ -25,7 +25,8 @@ interface FileUpload {
 const CATEGORIES = [
   'Groceries', 'Electronics', 'Fashion', 'Home & Kitchen',
   'Furniture', 'Beauty & Health', 'Sports', 'Books', 'Toys',
-  'Auto Parts', 'Stationery', 'Pet Supplies', 'Food'
+  'Auto Parts', 'Stationery', 'Pet Supplies', 'Food',
+  'Men Fashion', 'Women Fashion', 'Accessories', 'Jewellery', 'Bangles'
 ];
 
 const CUISINE_TYPES = [
@@ -582,6 +583,61 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
     }
   };
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                  });
+                  resolve(compressedFile.size < file.size ? compressedFile : file);
+                } else {
+                  resolve(file);
+                }
+              },
+              'image/jpeg',
+              0.7
+            );
+          } else {
+            resolve(file);
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const onSubmitForm = async (values: any) => {
     // Check steps again
     const finalValid = await step4Schema.safeParseAsync(values);
@@ -609,14 +665,26 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
       data.append('pincode', values.pincode);
 
       data.append('panNumber', values.panNumber);
-      if (idProof.file) data.append('idProof', idProof.file);
-      if (businessProof.file) data.append('businessProof', businessProof.file);
-      if (addressProof.file) data.append('addressProof', addressProof.file);
+      if (idProof.file) {
+        const fileToUpload = await compressImage(idProof.file);
+        data.append('idProof', fileToUpload);
+      }
+      if (businessProof.file) {
+        const fileToUpload = await compressImage(businessProof.file);
+        data.append('businessProof', fileToUpload);
+      }
+      if (addressProof.file) {
+        const fileToUpload = await compressImage(addressProof.file);
+        data.append('addressProof', fileToUpload);
+      }
 
       data.append('accountHolderName', values.accountHolderName);
       data.append('bankAccountNumber', values.bankAccountNumber);
       data.append('ifscCode', values.ifscCode);
-      if (cancelledCheque.file) data.append('cancelledCheque', cancelledCheque.file);
+      if (cancelledCheque.file) {
+        const fileToUpload = await compressImage(cancelledCheque.file);
+        data.append('cancelledCheque', fileToUpload);
+      }
 
       data.append('vendorType', values.vendorType);
       data.append('openingTime', values.openingTime);

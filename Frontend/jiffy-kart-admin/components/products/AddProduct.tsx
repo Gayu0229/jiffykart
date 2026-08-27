@@ -24,6 +24,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onBack, editProduct, fixedFlags
   const [vendors, setVendors] = useState<VendorFull[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isCustomSubCategory, setIsCustomSubCategory] = useState(false);
 
   const [product, setProduct] = useState<Partial<Product>>({
     name: '',
@@ -113,6 +115,9 @@ const AddProduct: React.FC<AddProductProps> = ({ onBack, editProduct, fixedFlags
         createFormData.append('mrp', (product.mrp || 0).toString());
         createFormData.append('description', product.description || '');
         createFormData.append('category', product.category || '');
+        if (product.subCategory) {
+          createFormData.append('subCategory', product.subCategory);
+        }
         createFormData.append('status', product.status === 'Live' ? 'PUBLISHED' : 'DRAFT');
         createFormData.append('stockQuantity', (product.category === 'Food' || product.isJiffyCafe) ? '9999' : (product.stock || 0).toString());
         createFormData.append('showOnJiffyStreet', String(product.isJiffyStreet));
@@ -211,41 +216,117 @@ const AddProduct: React.FC<AddProductProps> = ({ onBack, editProduct, fixedFlags
                   />
                 </div>
 
-                <div className={`grid ${fixedFlags ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Category</label>
-                    <select
-                      value={product.category}
-                      onChange={(e) => handleChange('category', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none cursor-pointer text-gray-900 font-bold transition-all"
-                    >
-                      <option value="">Select Category</option>
-                      {CATEGORIES_TREE.filter(cat => {
-                        if (fixedFlags?.isJiffyCafe) {
-                          return ['Food', 'Groceries', 'Beverages', 'Meals'].includes(cat.name);
-                        }
-                        return true;
-                      }).map(cat => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
+                    {isCustomCategory ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={product.category || ''}
+                          onChange={(e) => handleChange('category', e.target.value)}
+                          placeholder="Enter Custom Category"
+                          className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-gray-900 font-bold transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomCategory(false);
+                            handleChange('category', '');
+                          }}
+                          className="px-3 bg-slate-200 text-slate-700 rounded-2xl text-xs font-black hover:bg-slate-300 transition-colors"
+                        >
+                          Select
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={product.category || ''}
+                        onChange={(e) => {
+                          if (e.target.value === 'CUSTOM') {
+                            setIsCustomCategory(true);
+                            handleChange('category', '');
+                          } else {
+                            handleChange('category', e.target.value);
+                          }
+                          handleChange('subCategory', '');
+                        }}
+                        className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none cursor-pointer text-gray-900 font-bold transition-all"
+                      >
+                        <option value="">Select Category</option>
+                        {CATEGORIES_TREE.filter(cat => {
+                          if (fixedFlags?.isJiffyCafe) {
+                            return ['Food', 'Groceries', 'Beverages', 'Meals'].includes(cat.name);
+                          }
+                          return true;
+                        }).map(cat => (
+                          <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
+                        <option value="CUSTOM">+ Add New Category</option>
+                      </select>
+                    )}
                   </div>
-                  {!fixedFlags && (
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Shop / Vendor</label>
-                    <select
-                      value={product.vendorId}
-                      onChange={(e) => handleChange('vendorId', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none cursor-pointer text-gray-900 font-bold transition-all"
-                    >
-                      <option value="">Select Shop</option>
-                      {vendors.map(v => (
-                        <option key={v.id} value={v.id}>{v.shopName}</option>
-                      ))}
-                    </select>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Subcategory</label>
+                    {isCustomSubCategory ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={product.subCategory || ''}
+                          onChange={(e) => handleChange('subCategory', e.target.value)}
+                          placeholder="Enter Custom Subcategory"
+                          className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-gray-900 font-bold transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomSubCategory(false);
+                            handleChange('subCategory', '');
+                          }}
+                          className="px-3 bg-slate-200 text-slate-700 rounded-2xl text-xs font-black hover:bg-slate-300 transition-colors"
+                        >
+                          Select
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={product.subCategory || ''}
+                        onChange={(e) => {
+                          if (e.target.value === 'CUSTOM') {
+                            setIsCustomSubCategory(true);
+                            handleChange('subCategory', '');
+                          } else {
+                            handleChange('subCategory', e.target.value);
+                          }
+                        }}
+                        disabled={!product.category}
+                        className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none cursor-pointer text-gray-900 font-bold transition-all disabled:opacity-50"
+                      >
+                        <option value="">Select Subcategory</option>
+                        {CATEGORIES_TREE.find(cat => cat.name === product.category)?.subCategories.map((sub, idx) => (
+                          <option key={idx} value={sub}>{sub}</option>
+                        ))}
+                        <option value="CUSTOM">+ Add New Subcategory</option>
+                      </select>
+                    )}
                   </div>
-                  )}
                 </div>
+
+                {!fixedFlags && (
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Shop / Vendor</label>
+                  <select
+                    value={product.vendorId}
+                    onChange={(e) => handleChange('vendorId', e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none cursor-pointer text-gray-900 font-bold transition-all"
+                  >
+                    <option value="">Select Shop</option>
+                    {vendors.map(v => (
+                      <option key={v.id} value={v.id}>{v.shopName}</option>
+                    ))}
+                  </select>
+                </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
@@ -340,25 +421,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onBack, editProduct, fixedFlags
                         className={`relative w-14 h-8 rounded-full transition-all duration-300 ${product.isJiffyStreet ? 'bg-indigo-600 shadow-lg shadow-indigo-100' : 'bg-gray-200'}`}
                       >
                         <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm transition-transform duration-300 ${product.isJiffyStreet ? 'translate-x-6' : ''}`}></div>
-                      </button>
-                    </div>
-
-                    {/* Jiffy Cafe Toggle */}
-                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${product.isJiffyCafe ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>
-                          <Coffee size={20} />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">Show on Jiffy Cafe</p>
-                          <p className="text-xs text-gray-500 font-medium">Visible in Jiffy Cafe section</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleChange('isJiffyCafe', !product.isJiffyCafe)}
-                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${product.isJiffyCafe ? 'bg-orange-600 shadow-lg shadow-orange-100' : 'bg-gray-200'}`}
-                      >
-                        <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm transition-transform duration-300 ${product.isJiffyCafe ? 'translate-x-6' : ''}`}></div>
                       </button>
                     </div>
                   </>

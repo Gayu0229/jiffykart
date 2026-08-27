@@ -342,6 +342,11 @@ export const CATEGORIES_TREE: ProductCategory[] = [
   { id: 'cat_pet', name: 'Pet Supplies', subCategories: ['Dog Food', 'Cat Food', 'Toys', 'Grooming'] },
   { id: 'cat_food', name: 'Food', subCategories: ['Meals', 'Fast Food', 'Beverages', 'Desserts', 'Snacks'] },
   { id: 'cat_furniture', name: 'Furniture', subCategories: ['Bed', 'Sofa', 'Table', 'Chair', 'Storage'] },
+  { id: 'cat_men_fashion', name: 'Men Fashion', subCategories: [] },
+  { id: 'cat_women_fashion', name: 'Women Fashion', subCategories: [] },
+  { id: 'cat_accessories', name: 'Accessories', subCategories: ['Handbags', 'Wallets', 'Belts', 'Sunglasses', 'Watches', 'Hair Accessories', 'kids hair accessories', 'Scarves & Stoles', 'Caps & Hats', 'Brooches & Pins', 'Makeup Pouches', 'Travel Accessories', 'Fashion Accessories'] },
+  { id: 'cat_jewellery', name: 'Jewellery', subCategories: ['Fashion Necklaces', 'Chains', 'Pendant Necklaces', 'Chokers', 'Layered Necklaces', 'Traditional Necklaces', 'Mangalsutra', 'Necklace Sets', 'Bangles', 'Studs', 'Jhumkas', 'Hoops', 'Drops', 'Dangles', 'Chandbali', 'Huggies', 'Ear Cuffs', 'Traditional', 'Fashion', 'Oxidised', 'Gold', 'Silver', 'Bridal', 'Earring Sets'] },
+  { id: 'cat_bangles', name: 'Bangles', subCategories: ['Stones', 'Oxidised', 'Bridal', 'Glass Bangles', 'Side Bangles', 'Kada'] },
 ];
 
 export const MOCK_SUPPORT_TICKETS: SupportTicket[] = [

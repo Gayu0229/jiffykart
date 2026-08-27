@@ -46,24 +46,44 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.WEEK);
+  
+  // Respective state variables
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [salesData, setSalesData] = useState<SalesDataPoint[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryDataPoint[]>([]);
   const [trafficData, setTrafficData] = useState<TrafficSource[]>([]);
   const [topVendors, setTopVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Separate loading states
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [salesLoading, setSalesLoading] = useState(true);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  const [trafficLoading, setTrafficLoading] = useState(true);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+
+  // Separate error states
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [salesError, setSalesError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [trafficError, setTrafficError] = useState<string | null>(null);
+  const [vendorsError, setVendorsError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAllDashboardData = async () => {
-      setLoading(true);
+      setStatsLoading(true);
+      setSalesLoading(true);
+      setCategoryLoading(true);
+      setTrafficLoading(true);
+      setVendorsLoading(true);
+
+      setStatsError(null);
+      setSalesError(null);
+      setCategoryError(null);
+      setTrafficError(null);
+      setVendorsError(null);
+
       try {
-        const [
-          dashboardStats,
-          sData,
-          cData,
-          tData,
-          vData
-        ] = await Promise.all([
+        const results = await Promise.allSettled([
           api.getStats(),
           api.getSalesData(),
           api.getCategoryData(),
@@ -71,26 +91,71 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           api.getTopVendors()
         ]);
 
-        setStats(dashboardStats);
-        setSalesData(sData);
-        setCategoryData(cData);
-        setTrafficData(tData);
-        setTopVendors(vData);
+        // 1. Stats
+        const statsRes = results[0];
+        if (statsRes.status === 'fulfilled') {
+          setStats(statsRes.value ?? null);
+        } else {
+          console.error('[Dashboard] Failed to fetch stats:', statsRes.reason);
+          setStatsError('Failed to load key stats');
+          setStats({
+            totalOrders: 0, totalRevenue: 0, activeVendors: 0, activeProducts: 0,
+            pendingVendors: 0, pendingProducts: 0, ordersProcessing: 0,
+            supportTickets: 0, totalCustomers: 0, totalDeliveryPartners: 0
+          });
+        }
+        setStatsLoading(false);
+
+        // 2. Sales Data
+        const salesRes = results[1];
+        if (salesRes.status === 'fulfilled') {
+          setSalesData(salesRes.value ?? []);
+        } else {
+          console.error('[Dashboard] Failed to fetch sales data:', salesRes.reason);
+          setSalesError('Failed to load sales analytics');
+        }
+        setSalesLoading(false);
+
+        // 3. Category Data
+        const categoryRes = results[2];
+        if (categoryRes.status === 'fulfilled') {
+          setCategoryData(categoryRes.value ?? []);
+        } else {
+          console.error('[Dashboard] Failed to fetch category data:', categoryRes.reason);
+          setCategoryError('Failed to load category share');
+        }
+        setCategoryLoading(false);
+
+        // 4. Traffic Data
+        const trafficRes = results[3];
+        if (trafficRes.status === 'fulfilled') {
+          setTrafficData(trafficRes.value ?? []);
+        } else {
+          console.error('[Dashboard] Failed to fetch traffic data:', trafficRes.reason);
+          setTrafficError('Failed to load traffic sources');
+        }
+        setTrafficLoading(false);
+
+        // 5. Top Vendors
+        const vendorsRes = results[4];
+        if (vendorsRes.status === 'fulfilled') {
+          setTopVendors(vendorsRes.value ?? []);
+        } else {
+          console.error('[Dashboard] Failed to fetch top vendors:', vendorsRes.reason);
+          setVendorsError('Failed to load best performing vendors');
+        }
+        setVendorsLoading(false);
+
       } catch (error) {
-        console.error("Failed to load dashboard components", error);
-        setStats({
-          totalOrders: 0, totalRevenue: 0, activeVendors: 0, activeProducts: 0,
-          pendingVendors: 0, pendingProducts: 0, ordersProcessing: 0,
-          supportTickets: 0, totalCustomers: 0, totalDeliveryPartners: 0
-        });
-      } finally {
-        setLoading(false);
+        console.error("Critical error in Promise.allSettled wrapper", error);
       }
     };
     fetchAllDashboardData();
   }, []);
 
-  if (loading || !stats) {
+  const overallLoading = statsLoading && salesLoading && categoryLoading && trafficLoading && vendorsLoading;
+
+  if (overallLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
@@ -161,6 +226,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </button>
         </div>
       </div>
+
+      {statsError && (
+        <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2 font-semibold">
+          <AlertCircle size={16} />
+          <span>{statsError}. Displaying fallback system metrics.</span>
+        </div>
+      )}
 
       {/* Key Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-8">
@@ -259,7 +331,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
           <div className="h-[300px] w-full flex items-center justify-center">
-            {salesData.length > 0 ? (
+            {salesLoading ? (
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            ) : salesError ? (
+              <div className="text-rose-500 text-sm flex items-center gap-2 font-medium">
+                <AlertCircle size={16} />
+                <span>{salesError}</span>
+              </div>
+            ) : salesData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -292,7 +371,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-6">Category Share</h2>
           <div className="h-[220px] w-full relative flex items-center justify-center">
-            {categoryData.length > 0 ? (
+            {categoryLoading ? (
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            ) : categoryError ? (
+              <div className="text-rose-500 text-sm flex items-center gap-2 font-medium">
+                <AlertCircle size={16} />
+                <span>{categoryError}</span>
+              </div>
+            ) : categoryData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -342,7 +428,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Traffic Sources</h2>
           <div className="h-[200px] w-full flex items-center justify-center">
-            {trafficData.length > 0 ? (
+            {trafficLoading ? (
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            ) : trafficError ? (
+              <div className="text-rose-500 text-sm flex items-center gap-2 font-medium">
+                <AlertCircle size={16} />
+                <span>{trafficError}</span>
+              </div>
+            ) : trafficData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={trafficData} layout="vertical" margin={{ left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
@@ -376,17 +469,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* Bottom: Best Vendors Table */}
-      {topVendors.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <h2 className="text-lg font-bold text-gray-800">Best Performing Vendors</h2>
-            <button
-              onClick={() => onNavigate('All Vendors')}
-              className="text-sm text-primary font-medium hover:text-primary/80"
-            >
-              View All Vendors &rarr;
-            </button>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h2 className="text-lg font-bold text-gray-800">Best Performing Vendors</h2>
+          <button
+            onClick={() => onNavigate('All Vendors')}
+            className="text-sm text-primary font-medium hover:text-primary/80"
+          >
+            View All Vendors &rarr;
+          </button>
+        </div>
+        {vendorsLoading ? (
+          <div className="p-12 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
+        ) : vendorsError ? (
+          <div className="p-12 text-center text-rose-500 text-sm flex items-center justify-center gap-2 font-medium">
+            <AlertCircle size={16} />
+            <span>{vendorsError}</span>
+          </div>
+        ) : topVendors.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -403,24 +505,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <img className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200" src={vendor.avatarUrl} alt={vendor.name} />
-                        <div className="text-sm font-medium text-gray-900">{vendor.name}</div>
+                        <img className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200" src={vendor.avatarUrl} alt={vendor?.name || 'Vendor'} />
+                        <div className="text-sm font-medium text-gray-900">{vendor?.name || 'N/A'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                      {vendor.orders.toLocaleString()}
+                      {vendor?.orders?.toLocaleString() ?? 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <span className="text-yellow-400 mr-1">★</span>
-                        {vendor.rating}
+                        {vendor?.rating ?? '0.0'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="w-full max-w-[100px] bg-gray-200 rounded-full h-2.5 mr-2 inline-block align-middle">
-                        <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${vendor.deliverySuccess}%` }}></div>
+                        <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${vendor?.deliverySuccess ?? 0}%` }}></div>
                       </div>
-                      <span className="text-xs text-gray-500">{vendor.deliverySuccess}%</span>
+                      <span className="text-xs text-gray-500">{vendor?.deliverySuccess ?? 0}%</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -432,8 +534,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="p-12 text-center text-gray-400 text-sm italic">
+            No vendor performance statistics available
+          </div>
+        )}
+      </div>
     </>
   );
 };

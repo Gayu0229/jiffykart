@@ -81,6 +81,8 @@ export interface Product {
   warranty_period?: string;
   warranty_type?: 'Manufacturer' | 'Seller' | 'Brand';
   shop_id?: string;
+  shopName?: string;
+  showOnJiffyStreet?: boolean;
 }
 
 export interface OrderItem {

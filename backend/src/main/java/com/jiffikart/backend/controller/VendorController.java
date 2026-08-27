@@ -51,6 +51,9 @@ public class VendorController {
     @Autowired
     private com.jiffikart.backend.service.StatsService statsService;
 
+    @Autowired
+    private com.jiffikart.backend.service.NotificationService notificationService;
+
     private User getAuthenticatedUser(Authentication authentication) {
         String identifier = authentication.getName();
         try {
@@ -506,7 +509,17 @@ public class VendorController {
             product.setImage(imageUrl);
         }
         
-        return ResponseEntity.ok(productService.saveProduct(product));
+        Product saved = productRepository.save(product);
+        if (saved.getStatus() == ProductStatus.PUBLISHED && saved.getMrp() != null && saved.getPrice() != null && saved.getPrice() < saved.getMrp()) {
+            notificationService.notifyFollowersOfOffer(
+                shop.getId(),
+                shop.getName(),
+                saved.getName(),
+                saved.getPrice(),
+                saved.getMrp()
+            );
+        }
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/products/{id}")

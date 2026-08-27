@@ -79,7 +79,7 @@ export const JiffyStreetPage: React.FC<JiffyStreetPageProps> = ({ onBack, onAddT
           </div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
             {categories.map((cat) => (
-              <button key={cat} onClick={() => setSelectedCategory(cat)} className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition ${selectedCategory === cat ? 'bg-primary text-white' : 'bg-white border border-accent text-primary'}`}>{cat}</button>
+              <button key={cat} onClick={() => setSelectedCategory(cat)} className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition ${selectedCategory === cat ? 'bg-primary text-white' : 'bg-white border border-accent text-primary'}`}>{cat}</button>
             ))}
           </div>
         </div>

@@ -59,12 +59,16 @@ const ProductList: React.FC<ProductListProps> = ({ onAddProduct, onEditProduct }
   }, [toast]);
 
   const getVendorName = (id: string) => {
-    return vendors.find(v => v.id === id)?.shopName || 'Unknown Vendor';
+    if (!vendors || !Array.isArray(vendors)) return 'Unknown Vendor';
+    return vendors.find(v => v && v.id === id)?.shopName || 'Unknown Vendor';
   };
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProducts = (products || []).filter(p => {
+    if (!p) return false;
+    const name = p.name || '';
+    const sku = p.sku || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'All' || p.category === filterCategory;
     const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
 
@@ -121,12 +125,12 @@ const ProductList: React.FC<ProductListProps> = ({ onAddProduct, onEditProduct }
           <h1 className="text-2xl font-bold text-gray-800">Product Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage catalog, inventory, and pricing.</p>
         </div>
-        <button
+        {/* <button
           onClick={onAddProduct}
           className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm font-medium"
         >
           <Plus size={18} className="mr-2" /> Add Product
-        </button>
+        </button> */}
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">

@@ -67,8 +67,10 @@ import JiffyStreetManager from './components/products/JiffyStreetManager';
 import PendingProducts from './components/products/PendingProducts';
 import { NotificationBell } from './components/NotificationBell';
 import SubscriptionManager from './components/subscriptions/SubscriptionManager';
+import { LiveAnalytics } from './components/LiveAnalytics';
 import { VendorFull, Franchise, AdminUser, VendorPaymentProfile, PendingVendor, KYCRequest, Product } from './types';
 import { api } from './services/api';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   // Auth State
@@ -164,9 +166,10 @@ function App() {
       const fetchPayments = async () => {
         try {
           const data = await api.getVendorPayouts();
-          setVendorPayments(data);
+          setVendorPayments(data || []);
         } catch (err) {
-          console.error("Failed to fetch payout data", err);
+          console.error("Vendor Payments API failed:", err);
+          setVendorPayments([]);
         }
       };
       fetchPayments();
@@ -252,7 +255,7 @@ function App() {
 
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setCurrentPage('Add Product to Jiffy Street');
+    setCurrentPage('Add Jiffy Street Product');
   };
 
   const renderContent = () => {
@@ -313,7 +316,15 @@ function App() {
         return <AllShops onViewShop={handleViewShop} {...listProps} />;
 
       // Products
-      case 'Jiffy Street': return <JiffyStreetManager onAddProduct={() => setCurrentPage('Add Jiffy Street Product')} />;
+      case 'Jiffy Street': return (
+        <JiffyStreetManager 
+          onAddProduct={() => setCurrentPage('Add Jiffy Street Product')} 
+          onEditProduct={(prod) => {
+            setEditingProduct(prod);
+            setCurrentPage('Edit Product');
+          }}
+        />
+      );
       case 'Pending Product Approval': return <PendingProducts />;
       case 'All Products': return <ProductList onAddProduct={handleAddProduct} onEditProduct={handleEditProduct} />;
       case 'Add Jiffy Street Product': return <AddProduct onBack={() => setCurrentPage('Jiffy Street')} fixedFlags={{ isJiffyStreet: true, isJiffyCafe: false }} />;
@@ -385,6 +396,9 @@ function App() {
       case 'Subscription Plans': return <SubscriptionManager defaultTab="plans" />;
       case 'Subscription Users': return <SubscriptionManager defaultTab="subscribers" />;
       case 'Subscription Analytics': return <SubscriptionManager defaultTab="analytics" />;
+
+      // Restaurant Bookings
+      case 'Live Reservations': return <LiveAnalytics />;
 
       default:
         return (
@@ -462,7 +476,9 @@ function App() {
         )}
 
         <main className="flex-1 overflow-auto p-6">
-          {renderContent()}
+          <ErrorBoundary>
+            {renderContent()}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

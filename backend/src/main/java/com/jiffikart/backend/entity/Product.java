@@ -100,10 +100,16 @@ public class Product {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (Boolean.TRUE.equals(showOnJiffyStreet)) {
+            showOnJiffyCafe = false;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        if (Boolean.TRUE.equals(showOnJiffyStreet)) {
+            showOnJiffyCafe = false;
+        }
     }
 }
