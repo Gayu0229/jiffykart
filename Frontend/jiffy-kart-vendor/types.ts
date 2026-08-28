@@ -13,12 +13,7 @@ export enum View {
   SETTINGS = 'SETTINGS',
   SUPPORT = 'SUPPORT',
   AI_ASSISTANT = 'AI_ASSISTANT',
-  RETURNS = 'RETURNS',
-  TABLES = 'TABLES',
-  WAITLIST = 'WAITLIST',
-  KITCHEN = 'KITCHEN',
-  RESERVATIONS = 'RESERVATIONS',
-  QR_CHECKIN = 'QR_CHECKIN'
+  RETURNS = 'RETURNS'
 }
 
 export interface UserProfile {
@@ -120,9 +115,6 @@ export interface Transaction {
 }
 
 export interface VendorProfile {
-  id?: number;
-  shopId?: number;
-  vendorType?: string;
   shopName: string;
   businessType: string;
   category: string;

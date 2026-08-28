@@ -12,11 +12,8 @@ import {
   Zap,
   MapPin,
   LifeBuoy,
-  Brain,
-  Calendar,
-  ListOrdered
+  Brain
 } from 'lucide-react';
-import { Check } from "lucide-react";
 import { View } from '../types';
 import logo from '../assets/images/logo.png';
 
@@ -27,11 +24,7 @@ interface SidebarProps {
   newOrdersCount: number;
   returnRequestsCount?: number;
   shopName?: string;
-  vendorType?: string;
-  foodBusinessType?: string;
 }
-
-
 
 const JiffyLogo: React.FC<{ className?: string; shopName?: string }> = ({ className, shopName }) => (
   <div className={`flex items-center ${className}`}>
@@ -45,106 +38,22 @@ const JiffyLogo: React.FC<{ className?: string; shopName?: string }> = ({ classN
   </div>
 );
 
-interface MenuItem {
-  id: View;
-  label: string;
-  icon: React.ComponentType<any>;
-  badge?: string | null;
-  badgeColor?: string;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, newOrdersCount, returnRequestsCount, shopName, vendorType, foodBusinessType }) => {
-  const getMenuItems = (): MenuItem[] => {
-    // Normal items:
-    const home: MenuItem = { id: View.DASHBOARD, label: 'Home', icon: LayoutDashboard };
-    const newOrders: MenuItem = { id: View.NEW_ORDERS, label: 'New Orders', icon: Zap, badge: newOrdersCount > 0 ? newOrdersCount.toString() : null, badgeColor: 'bg-brand-500 text-white' };
-    const orderHistory: MenuItem = { id: View.ORDERS, label: 'Order History', icon: ShoppingCart };
-    const returnedOrders: MenuItem = { id: View.RETURNS, label: 'Returned Orders', icon: Package, badge: returnRequestsCount && returnRequestsCount > 0 ? returnRequestsCount.toString() : null, badgeColor: 'bg-rose-500 text-white' };
-    const products: MenuItem = { id: View.PRODUCTS, label: 'Products', icon: Package };
-    const floorPlan: MenuItem = { id: View.TABLES, label: 'Seat Management', icon: Calendar };
-    const tableWaitlist: MenuItem = { id: View.WAITLIST, label: 'Table Waitlist', icon: ListOrdered };
-    const analytics: MenuItem = { id: View.ANALYTICS, label: 'Analytics', icon: BarChart2 };
-    const payments: MenuItem = { id: View.PAYMENTS, label: 'Payments', icon: CreditCard };
-    const discounts: MenuItem = { id: View.DISCOUNTS, label: 'Discounts', icon: Tag };
-    const customers: MenuItem = { id: View.CUSTOMERS, label: 'Customer', icon: Users };
-    const shopLocation: MenuItem = { id: View.SHOP_LOCATION, label: 'Shop Location', icon: MapPin };
-    const support: MenuItem = { id: View.SUPPORT, label: 'Support', icon: LifeBuoy };
-    const aiAssistant: MenuItem = { id: View.AI_ASSISTANT, label: 'AI Assistant', icon: Brain, badge: 'NEW', badgeColor: 'bg-indigo-500 text-white' };
-
-    // New Food/Dineout items:
-    const kitchen: MenuItem = { id: View.KITCHEN, label: 'Kitchen Feed', icon: Zap };
-    const reservations: MenuItem = { id: View.RESERVATIONS, label: 'Reservations', icon: Calendar };
-    const qrCheckIn: MenuItem = { id: View.QR_CHECKIN, label: 'QR Check-In', icon: Check };
-
-    if (vendorType === 'FOOD_VENDOR') {
-      if (foodBusinessType === 'ONLINE_FOOD') {
-        return [
-          { ...home, label: 'Food Dashboard' },
-          newOrders,
-          orderHistory,
-          returnedOrders,
-          { ...products, label: 'Products & Inventory' },
-          kitchen,
-          analytics,
-          payments,
-          discounts,
-          support,
-          aiAssistant
-        ];
-      } else if (foodBusinessType === 'RESTAURANT_BOOKING') {
-        return [
-          { ...home, label: 'Restaurant Dashboard' },
-          reservations,
-          floorPlan,
-          tableWaitlist,
-          qrCheckIn,
-          analytics,
-          payments,
-          support,
-          aiAssistant
-        ];
-      } else if (foodBusinessType === 'BOTH') {
-        return [
-          { ...home, label: 'Dine & Order Home' },
-          newOrders,
-          orderHistory,
-          returnedOrders,
-          { ...products, label: 'Products & Inventory' },
-          kitchen,
-          reservations,
-          floorPlan,
-          tableWaitlist,
-          qrCheckIn,
-          analytics,
-          payments,
-          discounts,
-          customers,
-          shopLocation,
-          support,
-          aiAssistant
-        ];
-      }
-    }
-
-    // Default E-commerce or Street Hub:
-    return [
-      home,
-      newOrders,
-      orderHistory,
-      returnedOrders,
-      products,
-      ...(vendorType === 'FOOD' || vendorType === 'FOOD_VENDOR' ? [floorPlan, tableWaitlist] : []),
-      analytics,
-      payments,
-      discounts,
-      customers,
-      shopLocation,
-      support,
-      aiAssistant
-    ];
-  };
-
-  const menuItems = getMenuItems();
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, newOrdersCount, returnRequestsCount, shopName }) => {
+  const menuItems = [
+    { id: View.DASHBOARD, label: 'Home', icon: LayoutDashboard },
+    { id: View.NEW_ORDERS, label: 'New Orders', icon: Zap, badge: newOrdersCount > 0 ? newOrdersCount.toString() : null, badgeColor: 'bg-brand-500 text-white' },
+    { id: View.ORDERS, label: 'Order History', icon: ShoppingCart },
+    { id: View.RETURNS, label: 'Returned Orders', icon: Package, badge: returnRequestsCount && returnRequestsCount > 0 ? returnRequestsCount.toString() : null, badgeColor: 'bg-rose-500 text-white' },
+    { id: View.PRODUCTS, label: 'Products', icon: Package },
+    { id: View.ANALYTICS, label: 'Analytics', icon: BarChart2 },
+    { id: View.PAYMENTS, label: 'Payments', icon: CreditCard },
+    { id: View.DISCOUNTS, label: 'Discounts', icon: Tag },
+    { id: View.CUSTOMERS, label: 'Customer', icon: Users },
+    { id: View.SHOP_LOCATION, label: 'Shop Location', icon: MapPin },
+    { id: View.SUPPORT, label: 'Support', icon: LifeBuoy },
+    { id: View.AI_ASSISTANT, label: 'AI Assistant', icon: Brain, badge: 'NEW', badgeColor: 'bg-indigo-500 text-white' },
+    // { id: View.SETTINGS, label: 'Settings', icon: Settings },
+  ];
 
   return (
     <div className="w-64 bg-brand-900 text-gray-300 flex flex-col h-full overflow-hidden shrink-0 border-r border-white/5">
@@ -167,7 +76,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, newOrdersCo
               <span className="text-[10px] uppercase font-black tracking-widest">{item.label}</span>
             </div>
             {item.badge && <span className={`${item.badgeColor} text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm`}>{item.badge}</span>}
-            
             {activeView === item.id && <div className="absolute left-0 w-1 h-6 bg-brand-500 rounded-r-full"></div>}
           </button>
         ))}

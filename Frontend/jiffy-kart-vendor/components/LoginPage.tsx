@@ -34,7 +34,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   });
   const [step, setStep] = useState<'ID' | 'VERIFY'>('ID');
   const [isResetMode, setIsResetMode] = useState(false);
-  const [otpEmail, setOtpEmail] = useState('');
+  const [otpPhone, setOtpPhone] = useState('');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -65,15 +65,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpEmail || !otpEmail.includes('@')) {
-      setError('Please enter a valid business email.');
+    if (!otpPhone || otpPhone.trim().length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
     setIsLoading(true);
     setError('');
     try {
-      await VendorAuthApi.sendEmailOtp(otpEmail);
+      await VendorAuthApi.sendOtp(otpPhone);
       setStep('VERIFY');
       setCountdown(30);
     } catch (err: any) {
@@ -95,7 +95,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
     try {
-      const res = await VendorAuthApi.verifyEmailOtp(otpEmail, otpValue);
+      const res = await VendorAuthApi.verifyOtp(otpPhone, otpValue);
       if (res.forcePasswordChange) {
         setIsForceChange(true);
         setTempPassword(''); // OTP mode doesn't have a "password" to reuse, but the user might need to set one
@@ -307,7 +307,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 {isResetMode
                   ? 'Change your security settings to restore access.'
                   : (mode === 'OTP'
-                    ? (step === 'ID' ? 'Verify your identity to launch.' : `Sent pulse code to ${otpEmail}`)
+                    ? (step === 'ID' ? 'Vendor Access' : `Sent pulse code to ${otpPhone}`)
                     : 'Enter your account keys to enter the terminal.')}
               </p>
             </div>
@@ -420,22 +420,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               step === 'ID' ? (
                 <form onSubmit={handleSendOtp} className="space-y-8">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Registered Email</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Registered Phone/Mobile</label>
                     <div className="relative group/input">
                       <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center space-x-3 text-slate-300 group-focus-within/input:text-brand-500 transition-all">
-                        <Mail className="w-4 h-4" />
+                        <Phone className="w-4 h-4" />
                       </div>
                       <input
-                        required autoFocus type="email"
-                        placeholder="your@email.com" value={otpEmail}
-                        onChange={(e) => setOtpEmail(e.target.value)}
+                        required autoFocus type="tel"
+                        placeholder="Enter 10-digit mobile number" value={otpPhone}
+                        onChange={(e) => setOtpPhone(e.target.value.replace(/\D/g, ''))}
+                        maxLength={10}
                         className="w-full pl-14 pr-6 py-5 bg-white border-2 border-slate-300 rounded-3xl text-lg font-black text-slate-900 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 shadow-sm"
                       />
                     </div>
                   </div>
                   <button
                     type="submit"
-                    disabled={isLoading || !otpEmail || !otpEmail.includes('@')}
+                    disabled={isLoading || !otpPhone || otpPhone.length < 10}
                     className="w-full bg-[#0F172A] text-white font-black py-5 rounded-3xl shadow-xl hover:bg-black hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 uppercase tracking-widest text-[11px]"
                   >
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Initialize Connection</span><ChevronRight className="w-4 h-4" /></>}
@@ -446,7 +447,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <div className="space-y-6">
                     <div className="flex justify-between items-center px-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Passcode Entry</label>
-                      <button type="button" onClick={() => setStep('ID')} className="text-[9px] font-black text-brand-500 uppercase hover:underline">Change Email</button>
+                      <button type="button" onClick={() => setStep('ID')} className="text-[9px] font-black text-brand-500 uppercase hover:underline">Change Number</button>
                     </div>
                     <div className="flex justify-center gap-3">
                       {otp.map((digit, idx) => (

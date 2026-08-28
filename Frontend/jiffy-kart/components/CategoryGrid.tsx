@@ -13,7 +13,17 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) =
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const { navigate } = useNavigation();
 
-  const CATEGORY_BROWSER_DATA = [
+  interface CategoryBrowserItem {
+    name: string;
+    icon: string;
+    subGroups?: {
+      groupName: string;
+      items: string[];
+    }[];
+    subCategories?: string[];
+  }
+
+  const CATEGORY_BROWSER_DATA: CategoryBrowserItem[] = [
     {
       name: 'Kurtis and dress',
       icon: '👗',
@@ -322,6 +332,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) =
           <h3 className="text-2xl font-black text-slate-900 tracking-tight">Shop by Category</h3>
           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Explore our range</p>
         </div>
+        {/*
         <button
           onClick={() => setIsBrowserOpen(true)}
           className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-full text-rose-600 transition-all duration-300 shadow-sm"
@@ -329,15 +340,24 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) =
           <LayoutGrid size={16} className="stroke-[2.5]" />
           <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">Categories</span>
         </button>
+        */}
       </div>
 
-      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
-
-        {CATEGORIES.map((cat, index) => (
+      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 lg:grid-cols-9 gap-3 sm:gap-5">
+        {CATEGORIES.filter(cat => [
+          'cat_electronics',
+          'cat_fashion',
+          'cat_home',
+          'cat_beauty',
+          'cat_health',
+          'cat_books',
+          'cat_toys',
+          'cat_sports'
+        ].includes(cat.id)).map((cat, index) => (
           <button
             key={cat.id}
             onClick={() => onCategoryClick(cat.id)}
-            className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:border-primary/20 transition-all duration-500"
+            className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-5 bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:border-primary/20 transition-all duration-500"
           >
             <div className={`
                 w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center transition-all duration-700 overflow-hidden
@@ -363,6 +383,19 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick }) =
             </span>
           </button>
         ))}
+
+        {/* More Button */}
+        <button
+          onClick={() => setIsBrowserOpen(true)}
+          className="group flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-5 bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 hover:border-primary/20 transition-all duration-500"
+        >
+          <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center transition-all duration-700 overflow-hidden bg-slate-50 text-slate-600 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-[0_20px_40px_-10px_rgba(71,85,105,0.4)]">
+            <LayoutGrid size={24} className="stroke-[2.5]" />
+          </div>
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] group-hover:text-slate-900 transition-colors text-center px-1">
+            More
+          </span>
+        </button>
       </div>
 
       {/* Category Browser Modal Overlay */}

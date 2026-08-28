@@ -222,7 +222,7 @@ const step4Schema = z.object({
   bankAccountNumber: z.string().min(9, 'Enter a valid account number'),
   confirmAccountNumber: z.string().min(9, 'Enter a valid account number'),
   ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Enter a valid IFSC code'),
-  agreed: z.literal(true, { errorMap: () => ({ message: 'You must agree to the terms' }) }),
+  agreed: z.literal(true, { message: 'You must agree to the terms' }),
 }).refine(data => data.bankAccountNumber === data.confirmAccountNumber, {
   message: 'Account numbers do not match',
   path: ['confirmAccountNumber'],
@@ -591,7 +591,7 @@ export const SellerRegistration: React.FC<SellerRegistrationProps> = ({ onBack, 
       }
       const reader = new FileReader();
       reader.onload = (e) => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
