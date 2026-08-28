@@ -273,7 +273,7 @@ export interface Banner {
   imageMobileUrl?: string;
   ctaText?: string;
   ctaUrl?: string;
-  type: 'Homepage' | 'Category' | 'Shop' | 'Home' | 'Street';
+  type: 'Homepage' | 'Category' | 'Shop' | 'Home' | 'Street' | 'Deals';
   position: string;
   target?: string;
   status: 'Active' | 'Scheduled' | 'Inactive';

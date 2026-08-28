@@ -311,7 +311,7 @@ export const AppRouter: React.FC = () => {
                 onClick={() => { navigate('dineout'); setIsMenuOpen(false); }}
                 className="flex items-center gap-4 p-4 rounded-2xl font-bold bg-gradient-to-r from-orange-50 to-rose-50 text-orange-600 hover:from-orange-100 hover:to-rose-100 transition border border-orange-100"
               >
-                <Utensils size={18} /> DineOut — Book a Table
+                <Utensils size={18} /> DiniBee — Book a Table
               </button>
 
               <div className="h-px bg-slate-100 my-2" />

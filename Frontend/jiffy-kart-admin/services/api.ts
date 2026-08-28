@@ -12,7 +12,16 @@ import {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const getBaseUrl = () => {
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+  if (envUrl) return envUrl;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8080/api';
+  }
+  return 'https://api.jiffykart.in/api';
+};
+
+const API_BASE = getBaseUrl();
 
 // Axios instance with JWT interceptor
 const backend = axios.create({ baseURL: API_BASE });

@@ -5,11 +5,11 @@ import { Banner, City, Zone } from '../../types';
 import { api } from '../../services/api';
 
 interface BannerManagerProps {
-  defaultTab?: 'Homepage' | 'Category' | 'Shop';
+  defaultTab?: 'Homepage' | 'Category' | 'Shop' | 'Deals';
 }
 
 const BannerManager: React.FC<BannerManagerProps> = ({ defaultTab = 'Homepage' }) => {
-  const [activeTab, setActiveTab] = useState<'Homepage' | 'Category' | 'Shop'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'Homepage' | 'Category' | 'Shop' | 'Deals'>(defaultTab);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +139,7 @@ const BannerManager: React.FC<BannerManagerProps> = ({ defaultTab = 'Homepage' }
     try {
       const formData = new FormData();
       formData.append('title', newBanner.title || 'Untitled Promotion');
-      formData.append('position', newBanner.type === 'Homepage' ? 'Home' : (newBanner.type === 'Shop' ? 'Street' : String(newBanner.type)));
+      formData.append('position', newBanner.type === 'Homepage' ? 'Home' : (newBanner.type === 'Shop' ? 'Street' : (newBanner.type === 'Deals' ? 'Deals' : String(newBanner.type))));
       if (newBanner.target) formData.append('ctaUrl', newBanner.target); // Map target to ctaUrl for the backend
       if (newBanner.startDate) formData.append('startDate', `${newBanner.startDate}T00:00:00`);
       if (newBanner.endDate) formData.append('endDate', `${newBanner.endDate}T23:59:59`);
@@ -200,7 +200,7 @@ const BannerManager: React.FC<BannerManagerProps> = ({ defaultTab = 'Homepage' }
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <div className="flex space-x-8">
-          {(['Homepage', 'Category', 'Shop'] as const).map((tab) => (
+          {(['Homepage', 'Category', 'Shop', 'Deals'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -307,6 +307,7 @@ const BannerManager: React.FC<BannerManagerProps> = ({ defaultTab = 'Homepage' }
                     <option value="Homepage">Homepage</option>
                     <option value="Category">Category</option>
                     <option value="Shop">Shop</option>
+                    <option value="Deals">Best Deals Stores</option>
                   </select>
                 </div>
                 <div>

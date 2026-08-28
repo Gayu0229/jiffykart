@@ -79,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="lg:hidden flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-2xl transition-all active:scale-95 shadow-md shadow-orange-500/25 shrink-0"
                 >
                   <Utensils size={14} />
-                  <span>DineOut</span>
+                  <span>DiniBee</span>
                 </button>
               </div>
 
@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-black text-xs uppercase tracking-widest px-4 py-2.5 rounded-2xl transition-all active:scale-95 shadow-md shadow-orange-500/25 shrink-0"
               >
                 <Utensils size={15} />
-                <span>DineOut</span>
+                <span>DiniBee</span>
               </button>
               {isLoggedIn && <NotificationBell />}
 

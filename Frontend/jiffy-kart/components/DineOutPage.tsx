@@ -664,7 +664,7 @@ export const DineOutPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {/* DineOut badge */}
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-1.5 animate-fade-in">
               <span className="text-lg">🍽️</span>
-              <span className="text-white font-black text-sm uppercase tracking-widest">DineOut</span>
+              <span className="text-white font-black text-sm uppercase tracking-widest">DiniBee</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-emerald-300 text-xs font-bold">{restaurants.filter(r => r.isOpen).length} Open Now</span>
             </div>
@@ -899,7 +899,7 @@ export const DineOutPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* ── Why Choose DineOut ── */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-soft border border-gray-100">
-          <SectionHeader title="Why Choose DineOut?" subtitle="Everything you need for a perfect dining experience" />
+          <SectionHeader title="Why Choose DiniBee?" subtitle="Everything you need for a perfect dining experience" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {WHY_DINEOUT.map(w => (
               <div key={w.title} className={`flex gap-3 items-start p-4 rounded-2xl ${w.bg} hover:scale-[1.02] transition-transform duration-200`}>

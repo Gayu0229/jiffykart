@@ -5,6 +5,7 @@ import { CategoryGrid } from '../components/CategoryGrid';
 import { HomeShopSection } from '../components/HomeShopSection';
 import { JiffyStreetHomeSection } from '../components/JiffyStreetHomeSection';
 import { JiffyCafeHomeSection } from '../components/JiffyCafeHomeSection';
+import { BestDealsSection } from '../components/BestDealsSection';
 import { CATEGORIES } from '../components/constants';
 import { useNavigation, useCart } from '../hooks';
 import { ApiService } from '../services/apiService';
@@ -103,6 +104,11 @@ export const HomePage: React.FC = () => {
       {/* 3. Category Promotional Banner */}
       <div className="mt-8">
         <HeroSection position="Category" />
+      </div>
+
+      {/* 3a. Best Deals Near You */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12">
+        <BestDealsSection />
       </div>
 
       {/* 4. Sunday Jiffy Street Promo */}
