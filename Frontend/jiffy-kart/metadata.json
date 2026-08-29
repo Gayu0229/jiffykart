@@ -1,0 +1,7 @@
+{
+  "name": "Jiffy Kart",
+  "description": "Swiggy-inspired Hyperlocal Marketplace for Electronics, Fashion and Home Essentials. 30-minute delivery from verified local stores.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
