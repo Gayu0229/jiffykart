@@ -30,11 +30,32 @@ export const JiffyStreetPage: React.FC<JiffyStreetPageProps> = ({ onBack, onAddT
       .finally(() => setIsLoading(false));
   }, [areaId]);
 
-  const categories = ['All', 'Baby Care', 'Fashion', 'Home & Kitchen', 'Electronics', 'Audio'];
+  const categories = [
+    'All',
+    'Groceries',
+    'Electronics',
+    'Fashion',
+    'Home & Kitchen',
+    'Beauty',
+    'Health',
+    'Sports',
+    'Books',
+    'Toys',
+    'Auto Parts',
+    'Stationery',
+    'Pet Supplies',
+    'Food',
+    'Furniture',
+    'Men Fashion',
+    'Women Fashion',
+    'Accessories',
+    'Jewellery',
+    'Bangles'
+  ];
 
   const filteredProducts = useMemo(() => {
     if (selectedCategory === 'All') return products;
-    return products.filter(p => p.category === selectedCategory);
+    return products.filter(p => p.category?.toLowerCase().trim() === selectedCategory.toLowerCase().trim());
   }, [selectedCategory, products]);
 
   const handleSmartAction = (product: Product) => {

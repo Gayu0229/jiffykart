@@ -714,10 +714,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onLogout, onTrackOrder
                   <div className="flex justify-between items-center pt-2">
                     <span className="font-black text-2xl text-slate-900">₹{order.total.toLocaleString()}</span>
                     <div className="flex gap-4">
-                      {order.status === 'On the way' && (
+                      {order.status === 'Out for Delivery' && (
                         <button onClick={() => onTrackOrder?.(order)} className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-black transition">Track Live</button>
                       )}
-                      {(order.status === 'Delivered' || order.status === 'Completed') && !order.returnRequest && (
+                      {order.status === 'Delivered' && !order.returnRequest && (
                         <button onClick={() => openReturnModal(order)} className="bg-slate-100 text-slate-700 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition flex items-center gap-2" title="Request Return or Replace"><RotateCw size={14} /> Return/Replace</button>
                       )}
                       <button onClick={() => onBuyAgain?.(order)} className="bg-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-indigo-600 transition flex items-center gap-2"><Plus size={14} /> Reorder</button>

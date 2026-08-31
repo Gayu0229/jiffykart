@@ -63,7 +63,17 @@ const mapBackendStatusToFrontend = (status: string | undefined): Order['status']
   }
 };
 
-const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/api$/, '');
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8080/api';
+  }
+  return 'https://api.jiffykart.in/api';
+};
+
+const BACKEND_URL = getBaseUrl().replace(/\/api$/, '');
 
 const resolveImg = (url: string | null | undefined): string => {
   if (!url) return '';
@@ -89,6 +99,7 @@ const mapBackendProductToFrontend = (p: any): Product => {
     votes: p.votes || 0,
     is_best_seller: p.isBestSeller || p.is_best_seller || false,
     shop_id: p.shop?.id ? String(p.shop.id) : (p.shopId ? String(p.shopId) : p.shop_id),
+    showOnJiffyStreet: p.showOnJiffyStreet || p.show_on_jiffy_street || false,
   } as Product;
 };
 

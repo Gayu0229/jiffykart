@@ -2,8 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DashboardStats, Vendor, TicketMessage } from "../types";
 
-/* Initialization: Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY}); */
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAiClient = () => {
+  const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || "PLACEHOLDER_KEY_TO_PREVENT_LOAD_CRASH";
+  return new GoogleGenAI({ apiKey });
+};
+
+const ai = getAiClient();
 
 export const generateDashboardInsights = async (
   stats: DashboardStats,
@@ -50,7 +54,7 @@ export const analyzeSupportTicket = async (
   messages: TicketMessage[]
 ): Promise<{ category: string; priority: string; assignedTeam: string; summary: string } | null> => {
   // Prepare conversation text
-  const conversation = messages.map(m => `${m.sender}: ${m.content}`).join('\n');
+  const conversation = messages.map(m => `${m.senderRole} (ID: ${m.senderId}): ${m.message}`).join('\n');
 
   const prompt = `
     You are a support ticket triage AI. Analyze this ticket:

@@ -161,20 +161,26 @@ export const ProductDetailPage: React.FC = () => {
     }, [params.productId, areaId]);
 
 
-   const handleAddToCart = () => {
-      if (!product) return;
-      if (!isLoggedIn) {
-         navigate('login', {
-            redirect: 'product-detail',
-            redirectParams: { productId: product.id },
-            message: "Please sign in to add items to your cart."
-         });
-         return;
-      }
-      addToCart(product, quantity);
-      setToast(`Added ${quantity} ${product.name} to cart!`);
-      setTimeout(() => setToast(null), 3000);
-   };
+    const handleAddToCart = () => {
+       if (!product) return;
+       const isSunday = new Date().getDay() === 0;
+       if (product.showOnJiffyStreet && !isSunday) {
+          setToast("Locked - Jiffy Street deals are only active on Sundays! 🔒");
+          setTimeout(() => setToast(null), 3000);
+          return;
+       }
+       if (!isLoggedIn) {
+          navigate('login', {
+             redirect: 'product-detail',
+             redirectParams: { productId: product.id },
+             message: "Please sign in to add items to your cart."
+          });
+          return;
+       }
+       addToCart(product, quantity);
+       setToast(`Added ${quantity} ${product.name} to cart!`);
+       setTimeout(() => setToast(null), 3000);
+    };
 
    const handleToggleFavorite = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -240,7 +246,10 @@ export const ProductDetailPage: React.FC = () => {
       );
    }
 
-   return (
+    const isSunday = new Date().getDay() === 0;
+    const isJiffyStreetLocked = product.showOnJiffyStreet && !isSunday;
+
+    return (
       <div className="animate-fade-in bg-white min-h-screen pb-32">
          {/* Toast */}
          {toast && createPortal(
@@ -378,7 +387,7 @@ export const ProductDetailPage: React.FC = () => {
                                     <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[10px] font-black">
                                        {shop?.rating || '4.0'} <Star size={10} fill="currentColor" />
                                     </div>
-                                    <span>{shop?.ratingCount || '0'} Ratings</span>
+                                    <span>{shop?.rating_count || '0'} Ratings</span>
                                     <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
                                     <span>{followDetails?.followerCount || '0'} Followers</span>
                                     <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
@@ -432,12 +441,17 @@ export const ProductDetailPage: React.FC = () => {
                            <Plus size={18} />
                         </button>
                      </div>
-                     <button
-                        onClick={handleAddToCart}
-                        className="flex-1 bg-primary text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-2xl shadow-primary/20 hover:bg-indigo-600 transition-all active:scale-[0.98]"
-                     >
-                        <ShoppingCart size={24} /> Add to Cart • ₹{(product.price * quantity).toLocaleString()}
-                     </button>
+                      <button
+                         onClick={handleAddToCart}
+                         disabled={isJiffyStreetLocked}
+                         className={`flex-1 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.98] ${isJiffyStreetLocked ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-white shadow-primary/20 hover:bg-indigo-600'}`}
+                      >
+                         {isJiffyStreetLocked ? (
+                            <>Locked - Unlocks Sunday 🔒</>
+                         ) : (
+                            <><ShoppingCart size={24} /> Add to Cart • ₹{(product.price * quantity).toLocaleString()}</>
+                         )}
+                      </button>
                   </div>
                </div>
             </div>
@@ -561,9 +575,10 @@ export const ProductDetailPage: React.FC = () => {
                </div>
                <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-primary text-white py-4 px-6 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-sm uppercase tracking-widest"
+                  disabled={isJiffyStreetLocked}
+                  className={`flex-1 py-4 px-6 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all text-sm uppercase tracking-widest ${isJiffyStreetLocked ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-white hover:bg-indigo-600'}`}
                >
-                  Add <ShoppingCart size={18} /> • ₹{(product.price * quantity).toLocaleString()}
+                  {isJiffyStreetLocked ? "Locked 🔒" : <>Add <ShoppingCart size={18} /> • ₹{(product.price * quantity).toLocaleString()}</>}
                </button>
             </div>
          </div>
