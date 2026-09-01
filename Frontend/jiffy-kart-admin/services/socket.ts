@@ -3,9 +3,18 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
 export const createSocketClient = (onMessageReceived: (topic: string, body: any) => void) => {
-    let wsUrl = (import.meta as any).env?.VITE_WS_URL || 'http://localhost:8080/ws';
+    const getWsUrl = () => {
+        const envUrl = (import.meta as any).env?.VITE_WS_URL;
+        if (envUrl) {
+            return envUrl.replace(/^http/i, 'ws');
+        }
+        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            return 'ws://localhost:8080/ws';
+        }
+        return 'wss://api.jiffykart.in/ws';
+    };
 
-    const socketUrl = wsUrl.replace(/^http/i, 'ws');
+    const socketUrl = getWsUrl();
 
     const client = new Client({
         brokerURL: socketUrl,
